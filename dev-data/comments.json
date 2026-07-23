@@ -1,0 +1,37 @@
+[
+  {
+    "_id": "65c000000000000000000001",
+    "post": "65b000000000000000000001",
+    "author": "65a000000000000000000002",
+    "text": "Congrats! What did you use for hosting?",
+    "createdAt": "2026-02-01T10:20:00.000Z"
+  },
+  {
+    "_id": "65c000000000000000000002",
+    "post": "65b000000000000000000001",
+    "author": "65a000000000000000000003",
+    "text": "Nice milestone, well deserved.",
+    "createdAt": "2026-02-01T10:35:00.000Z"
+  },
+  {
+    "_id": "65c000000000000000000003",
+    "post": "65b000000000000000000002",
+    "author": "65a000000000000000000001",
+    "text": "Check if it's the token expiry or the secret mismatch first.",
+    "createdAt": "2026-02-01T12:45:00.000Z"
+  },
+  {
+    "_id": "65c000000000000000000004",
+    "post": "65b000000000000000000003",
+    "author": "65a000000000000000000004",
+    "text": "Same, $group and $lookup took me a while to get comfortable with.",
+    "createdAt": "2026-02-02T09:40:00.000Z"
+  },
+  {
+    "_id": "65c000000000000000000005",
+    "post": "65b000000000000000000005",
+    "author": "65a000000000000000000001",
+    "text": "So true, order matters especially with error handlers.",
+    "createdAt": "2026-02-04T08:30:00.000Z"
+  }
+]

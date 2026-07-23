@@ -1,0 +1,48 @@
+[
+  {
+    "_id": "65b000000000000000000001",
+    "author": "65a000000000000000000001",
+    "content": "Just deployed my first Node.js API to production. Feels great!",
+    "likes": ["65a000000000000000000002", "65a000000000000000000003"],
+    "createdAt": "2026-02-01T10:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000002",
+    "author": "65a000000000000000000002",
+    "content": "Debugging JWT auth for 3 hours straight. Send help.",
+    "likes": ["65a000000000000000000001"],
+    "createdAt": "2026-02-01T12:30:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000003",
+    "author": "65a000000000000000000003",
+    "content": "MongoDB aggregation pipelines are weirdly satisfying once they click.",
+    "likes": [
+      "65a000000000000000000001",
+      "65a000000000000000000004",
+      "65a000000000000000000005"
+    ],
+    "createdAt": "2026-02-02T09:15:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000004",
+    "author": "65a000000000000000000004",
+    "content": "Started learning Next.js today. Server components are a mind shift.",
+    "likes": [],
+    "createdAt": "2026-02-03T16:45:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000005",
+    "author": "65a000000000000000000005",
+    "content": "Hot take: Express middleware order matters way more than tutorials make it seem.",
+    "likes": ["65a000000000000000000002", "65a000000000000000000003"],
+    "createdAt": "2026-02-04T08:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000006",
+    "author": "65a000000000000000000001",
+    "content": "Rate limiting saved my API from a bot attack last night. Worth it.",
+    "likes": ["65a000000000000000000005"],
+    "createdAt": "2026-02-05T19:20:00.000Z"
+  }
+]
