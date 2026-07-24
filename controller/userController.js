@@ -3,8 +3,6 @@ const User = require("../models/userModel");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 
-const userController = {
-  getUsers: factory.getAll(User),
-};
+const userController = {};
 
 module.exports = userController;

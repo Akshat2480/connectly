@@ -1,15 +1,17 @@
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const app = express();
-const globalErrorHandler = require("./controller/errorController.js");
 
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
 const commmentRouter = require("./Routes/commentRoutes");
+const globalErrorHandler = require("./controller/errorController.js");
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.use((req, res, next) => {
-  // console.log(req.body);
+  // console.log(req.cookies);
   next();
 });
 
