@@ -68,11 +68,8 @@ userSchema.pre(/^find/, function () {
 });
 
 // Instance method: compare candidate password with stored hash
-userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userPassword,
-) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+userSchema.methods.correctPassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Instance method: check if password was changed after a JWT was issued

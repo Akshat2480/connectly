@@ -1,8 +1,12 @@
 const factory = require("./factoryController");
 const Post = require("../models/postModel");
 
-exports.getPosts = factory.getAll(Post)
-exports.getPost = factory.getOne(Post)
-exports.createPost = factory.createOne(Post)
-exports.updatePost = factory.updateOne(Post)
-exports.deletePost = factory.deleteOne(Post)
+const postController = {
+  getPosts: factory.getAll(Post),
+  getPost: factory.getOne(Post),
+  createPost: factory.createOne(Post),
+  updatePost: factory.updateOne(Post),
+  deletePost: factory.deleteOne(Post),
+};
+
+module.exports = postController;
