@@ -48,17 +48,17 @@ const authController = {
     // 1) Find the user by email
     const user = await User.findOne({ email }).select("+password");
 
-    // Chcek if user exists and password is correct
+    // 2) Chcek if user exists and password is correct
     if (!user || !(await user.correctPassword(password))) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Generate a JWT token
+    // 3) Generate a JWT token and sent it as cookie
     sendCookieWithToken(user, res, 200, "Login successfull");
   }),
 
   protect: AsyncCatch(async (req, res, next) => {
-    // Get token from request
+    // 1) Get token from request
     let token;
     if (
       req.headers.authorization &&
@@ -73,10 +73,10 @@ const authController = {
       );
     }
 
-    // Verify token
+    // 2) Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Check if the user exists
+    // 3) Check if the user exists
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
@@ -88,7 +88,7 @@ const authController = {
       );
     }
 
-    // Check if the password was changed after token was issued
+    // 4) Check if the password was changed after token was issued
     if (req.user.changedPasswordAfter(decoded.iat)) {
       return next(
         new AppError(
