@@ -30,9 +30,17 @@ const factory = {
       });
     }),
 
-  createOne: (Model) =>
+  createOne: (Model, allowedFields = []) =>
     asyncCatch(async (req, res, next) => {
-      const doc = await Model.create(req.body);
+      const filteredBody = {};
+      allowedFields.forEach((field) => {
+        if (req.body[field] !== undefined) {
+          filteredBody[field] = req.body[field];
+        }
+      });
+      filteredBody.author = req.user.id;
+
+      const doc = await Model.create(filteredBody);
 
       res.status(201).json({
         status: "success",
@@ -42,33 +50,53 @@ const factory = {
       });
     }),
 
-  updateOne: (Model) =>
+  updateOne: (Model, allowedFields = []) =>
     asyncCatch(async (req, res, next) => {
-      const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
-        returnDocument: "after",
+      const currDoc = await Model.findById(req.params.id);
+
+      if (!currDoc)
+        return next(new AppError("No document found with the given id", 404));
+
+      if (currDoc.author.id !== req.user.id)
+        return next(new AppError("You are not the author of this post", 403));
+
+      const filteredBody = {};
+      allowedFields.forEach((field) => {
+        if (req.body[field] !== undefined) {
+          filteredBody[field] = req.body[field];
+        }
       });
 
-      if (!doc)
-        return next(new AppError("No document found with the given id", 404));
+      const updatedDoc = await Model.findByIdAndUpdate(
+        req.params.id,
+        filteredBody,
+        {
+          runValidators: true,
+          returnDocument: "after",
+        },
+      );
 
       res.status(200).json({
         status: "success",
         data: {
-          data: doc,
+          data: updatedDoc,
         },
       });
     }),
+
   deleteOne: (Model) =>
     asyncCatch(async (req, res, next) => {
-      const doc = await Model.findByIdAndDelete(req.params.id);
+      const doc = await Model.findById(req.params.id);
 
       if (!doc)
         return next(new AppError("No document found with the given id", 404));
 
-      res.status(204).json({
-        status: "success",
-        data: null,
-      });
+      if (doc.author.id !== req.user.id)
+        return next(new AppError("You are not the author of this post", 403));
+
+      await Model.findByIdAndDelete(req.params.id);
+
+      res.status(204).send();
     }),
 };
 
