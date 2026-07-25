@@ -14,7 +14,13 @@ router.get(
   userController.getMe,
   userController.getUser,
 );
-router.patch("/me", authController.protect, userController.updateMe);
+router.patch(
+  "/me",
+  authController.protect,
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userController.updateMe,
+);
 router.patch("/:id/follow", authController.protect, userController.followUser);
 
 router.use("/:userId/posts", postRouter);

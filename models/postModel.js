@@ -23,6 +23,10 @@ const postSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    images: {
+      type: [String],
+      default: [],
+    },
   },
   {
     toJSON: { virtuals: true },

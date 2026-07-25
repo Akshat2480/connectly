@@ -1,12 +1,25 @@
+const fs = require("fs");
+const multer = require("multer");
+const sharp = require("sharp");
+
 const factory = require("./factoryController");
 const Post = require("../models/postModel");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image")) cb(null, true);
+  else cb(new AppError("You are only allowed to upload images", 400), false);
+};
+
+const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
+
 const postController = {
   getPosts: factory.getAll(Post),
   getPost: factory.getOne(Post),
-  createPost: factory.createOne(Post, ["content"]),
+  createPost: factory.createOne(Post, ["content", "images"]),
   updatePost: factory.updateOne(Post, ["content"]),
   deletePost: factory.deleteOne(Post),
 
@@ -32,6 +45,30 @@ const postController = {
       status: "success",
       like: !hasLiked,
     });
+  }),
+
+  uploadPostImage: upload.array("images", 5),
+
+  resizePostImages: asyncCatch(async (req, res, next) => {
+    if (!req.files || req.files.length === 0) return next();
+
+    req.body.images = [];
+
+    await Promise.all(
+      req.files.map(async (file, i) => {
+        const filename = `post-${req.user.id}-${Date.now()}-${i}.jpeg`;
+
+        await sharp(file.buffer)
+          .resize(1000, 1000, { fit: "inside" })
+          .toFormat("jpeg")
+          .jpeg({ quality: 90 })
+          .toFile(`public/img/posts/${filename}`);
+
+        req.body.images.push(filename);
+      }),
+    );
+
+    next();
   }),
 };
 

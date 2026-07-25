@@ -1,12 +1,20 @@
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
+const ApiFeature = require("../utils/apiFeatures");
 
 const factory = {
   getAll: (Model) =>
     asyncCatch(async (req, res, next) => {
-      let filter = req.params.userId ? { author: req.params.userId } : {};
-      filter = req.params.postId ? { post: req.params.postId } : {};
-      const doc = await Model.find(filter);
+      let filter = {};
+      if (req.params.userId) filter = { author: req.params.userId };
+      else if (req.params.postId) filter = { post: req.params.postId };
+
+      const features = new ApiFeature(Model.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+      const doc = await features.query;
 
       res.status(200).json({
         status: "success",

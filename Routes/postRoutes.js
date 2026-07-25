@@ -8,7 +8,12 @@ const router = express.Router({ mergeParams: true });
 router
   .route("/")
   .get(postController.getPosts)
-  .post(authController.protect, postController.createPost);
+  .post(
+    authController.protect,
+    postController.uploadPostImage,
+    postController.resizePostImages,
+    postController.createPost,
+  );
 
 router.use("/:postId/comments", commentRouter);
 router.patch("/:id/like", authController.protect, postController.likePost);
