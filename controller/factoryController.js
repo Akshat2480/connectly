@@ -4,7 +4,9 @@ const AppError = require("../utils/AppError");
 const factory = {
   getAll: (Model) =>
     asyncCatch(async (req, res, next) => {
-      const doc = await Model.find();
+      let filter = req.params.userId ? { author: req.params.userId } : {};
+      filter = req.params.postId ? { post: req.params.postId } : {};
+      const doc = await Model.find(filter);
 
       res.status(200).json({
         status: "success",
@@ -39,6 +41,7 @@ const factory = {
         }
       });
       filteredBody.author = req.user.id;
+      if (req.params.postId) filteredBody.post = req.params.postId;
 
       const doc = await Model.create(filteredBody);
 

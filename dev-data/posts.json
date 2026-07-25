@@ -2,47 +2,216 @@
   {
     "_id": "65b000000000000000000001",
     "author": "65a000000000000000000001",
-    "content": "Just deployed my first Node.js API to production. Feels great!",
-    "likes": ["65a000000000000000000002", "65a000000000000000000003"],
-    "createdAt": "2026-02-01T10:00:00.000Z"
+    "content": "Finally shipped my MERN social app beta!",
+    "likes": [],
+    "createdAt": "2026-02-01T15:00:00.000Z"
   },
   {
     "_id": "65b000000000000000000002",
     "author": "65a000000000000000000002",
-    "content": "Debugging JWT auth for 3 hours straight. Send help.",
-    "likes": ["65a000000000000000000001"],
-    "createdAt": "2026-02-01T12:30:00.000Z"
+    "content": "JWT authentication finally works without bugs.",
+    "likes": [
+      "65a000000000000000000014",
+      "65a000000000000000000008",
+      "65a000000000000000000015",
+      "65a000000000000000000010",
+      "65a000000000000000000019"
+    ],
+    "createdAt": "2026-02-01T20:00:00.000Z"
   },
   {
     "_id": "65b000000000000000000003",
     "author": "65a000000000000000000003",
-    "content": "MongoDB aggregation pipelines are weirdly satisfying once they click.",
-    "likes": [
-      "65a000000000000000000001",
-      "65a000000000000000000004",
-      "65a000000000000000000005"
-    ],
-    "createdAt": "2026-02-02T09:15:00.000Z"
+    "content": "Learning Docker has been a game changer.",
+    "likes": [],
+    "createdAt": "2026-02-02T01:00:00.000Z"
   },
   {
     "_id": "65b000000000000000000004",
     "author": "65a000000000000000000004",
-    "content": "Started learning Next.js today. Server components are a mind shift.",
-    "likes": [],
-    "createdAt": "2026-02-03T16:45:00.000Z"
+    "content": "MongoDB indexes improved my API a lot.",
+    "likes": [
+      "65a000000000000000000006",
+      "65a000000000000000000019",
+      "65a000000000000000000007"
+    ],
+    "createdAt": "2026-02-02T06:00:00.000Z"
   },
   {
     "_id": "65b000000000000000000005",
     "author": "65a000000000000000000005",
-    "content": "Hot take: Express middleware order matters way more than tutorials make it seem.",
-    "likes": ["65a000000000000000000002", "65a000000000000000000003"],
-    "createdAt": "2026-02-04T08:00:00.000Z"
+    "content": "Who's using Prisma with MongoDB?",
+    "likes": [
+      "65a000000000000000000002",
+      "65a000000000000000000012",
+      "65a000000000000000000013",
+      "65a000000000000000000019"
+    ],
+    "createdAt": "2026-02-02T11:00:00.000Z"
   },
   {
     "_id": "65b000000000000000000006",
-    "author": "65a000000000000000000001",
-    "content": "Rate limiting saved my API from a bot attack last night. Worth it.",
-    "likes": ["65a000000000000000000005"],
-    "createdAt": "2026-02-05T19:20:00.000Z"
+    "author": "65a000000000000000000006",
+    "content": "TypeScript catches so many silly mistakes.",
+    "likes": [
+      "65a000000000000000000017",
+      "65a000000000000000000016",
+      "65a000000000000000000002",
+      "65a000000000000000000018"
+    ],
+    "createdAt": "2026-02-02T16:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000007",
+    "author": "65a000000000000000000007",
+    "content": "Built dark mode today and it looks clean.",
+    "likes": [
+      "65a000000000000000000006"
+    ],
+    "createdAt": "2026-02-02T21:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000008",
+    "author": "65a000000000000000000008",
+    "content": "Redis caching made my endpoints much faster.",
+    "likes": [],
+    "createdAt": "2026-02-03T02:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000009",
+    "author": "65a000000000000000000009",
+    "content": "Just pushed my first CI/CD pipeline.",
+    "likes": [
+      "65a000000000000000000012",
+      "65a000000000000000000003",
+      "65a000000000000000000013",
+      "65a000000000000000000016",
+      "65a000000000000000000020"
+    ],
+    "createdAt": "2026-02-03T07:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000010",
+    "author": "65a000000000000000000010",
+    "content": "Any favorite VS Code extensions?",
+    "likes": [
+      "65a000000000000000000005",
+      "65a000000000000000000014"
+    ],
+    "createdAt": "2026-02-03T12:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000011",
+    "author": "65a000000000000000000011",
+    "content": "Rate limiting is underrated.",
+    "likes": [
+      "65a000000000000000000017",
+      "65a000000000000000000006",
+      "65a000000000000000000009"
+    ],
+    "createdAt": "2026-02-03T17:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000012",
+    "author": "65a000000000000000000012",
+    "content": "Authentication is harder than expected.",
+    "likes": [
+      "65a000000000000000000016",
+      "65a000000000000000000007",
+      "65a000000000000000000010",
+      "65a000000000000000000011"
+    ],
+    "createdAt": "2026-02-03T22:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000013",
+    "author": "65a000000000000000000013",
+    "content": "WebSockets are so much fun to build.",
+    "likes": [
+      "65a000000000000000000018",
+      "65a000000000000000000007",
+      "65a000000000000000000003",
+      "65a000000000000000000017",
+      "65a000000000000000000019",
+      "65a000000000000000000011"
+    ],
+    "createdAt": "2026-02-04T03:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000014",
+    "author": "65a000000000000000000014",
+    "content": "Today's bug took six hours to find.",
+    "likes": [
+      "65a000000000000000000020",
+      "65a000000000000000000017",
+      "65a000000000000000000011",
+      "65a000000000000000000018",
+      "65a000000000000000000015"
+    ],
+    "createdAt": "2026-02-04T08:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000015",
+    "author": "65a000000000000000000015",
+    "content": "Finally understood aggregation pipelines.",
+    "likes": [
+      "65a000000000000000000005",
+      "65a000000000000000000009",
+      "65a000000000000000000006"
+    ],
+    "createdAt": "2026-02-04T13:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000016",
+    "author": "65a000000000000000000016",
+    "content": "React Query makes data fetching enjoyable.",
+    "likes": [
+      "65a000000000000000000003",
+      "65a000000000000000000015"
+    ],
+    "createdAt": "2026-02-04T18:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000017",
+    "author": "65a000000000000000000017",
+    "content": "Working on profile image uploads today.",
+    "likes": [
+      "65a000000000000000000001"
+    ],
+    "createdAt": "2026-02-04T23:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000018",
+    "author": "65a000000000000000000018",
+    "content": "Just deployed to Render successfully.",
+    "likes": [
+      "65a000000000000000000010",
+      "65a000000000000000000013",
+      "65a000000000000000000008",
+      "65a000000000000000000001"
+    ],
+    "createdAt": "2026-02-05T04:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000019",
+    "author": "65a000000000000000000019",
+    "content": "Backend debugging feels like detective work.",
+    "likes": [
+      "65a000000000000000000018",
+      "65a000000000000000000005",
+      "65a000000000000000000006"
+    ],
+    "createdAt": "2026-02-05T09:00:00.000Z"
+  },
+  {
+    "_id": "65b000000000000000000020",
+    "author": "65a000000000000000000020",
+    "content": "Connectly is coming together nicely!",
+    "likes": [
+      "65a000000000000000000011",
+      "65a000000000000000000005",
+      "65a000000000000000000009"
+    ],
+    "createdAt": "2026-02-05T14:00:00.000Z"
   }
 ]

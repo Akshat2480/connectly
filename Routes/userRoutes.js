@@ -1,6 +1,7 @@
 const express = require("express");
 const userController = require("../controller/userController");
 const authController = require("../controller/authController");
+const postRouter = require("../Routes/postRoutes");
 
 const router = express.Router();
 
@@ -13,8 +14,11 @@ router.get(
   userController.getMe,
   userController.getUser,
 );
-router.patch("/me", authController.protect, userController.updateMe)
+router.patch("/me", authController.protect, userController.updateMe);
 router.patch("/:id/follow", authController.protect, userController.followUser);
+
+router.use("/:userId/posts", postRouter);
+
 router.get("/:id", userController.getUser);
 
 module.exports = router;
