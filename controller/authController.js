@@ -8,22 +8,25 @@ const AppError = require("../utils/AppError");
 const { sendEmail } = require("../utils/email");
 const welcomeTemplate = require("../utils/templates/welcomeTemplate");
 const resetPasswordTemplate = require("../utils/templates/resetPasswordTemplate");
+const { promisify } = require("util");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: `${process.env.JWT_EXPIRES_IN}`,
   });
 };
-const sendCookieWithToken = (user, res, statusCode, message) => {
+const sendCookieWithToken = (user, res) => {
   const token = signToken(user.id);
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "none",
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+    ),
+    maxAge: process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
   };
   if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
   res.cookie("jwt", token, cookieOptions);
-
-  res.status(statusCode).json({ message, token });
 };
 
 const authController = {
@@ -40,6 +43,7 @@ const authController = {
 
     // 2) Generate a JWT token and send it as cookie
     sendCookieWithToken(newUser, res, 201, "Sign up successful");
+    res.status(201).json({ message: "Signed up successful" });
 
     // 3) Send email to the user
     // await sendEmail({
@@ -66,11 +70,12 @@ const authController = {
 
     // 2) Chcek if user exists and password is correct
     if (!user || !(await user.correctPassword(password))) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return next(new AppError("Invalid credentials", 401));
     }
 
     // 3) Generate a JWT token and sent it as cookie
-    sendCookieWithToken(user, res, 200, "Login successfull");
+    sendCookieWithToken(user, res);
+    res.status(200).json({ message: "Logged in successful" });
   }),
 
   protect: AsyncCatch(async (req, res, next) => {
@@ -90,7 +95,7 @@ const authController = {
     }
 
     // 2) Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = await promisify(jwt.verify(token, process.env.JWT_SECRET));
 
     // 3) Check if the user exists
     req.user = await User.findById(decoded.id);
@@ -171,7 +176,8 @@ const authController = {
     user.passwordResetExpires = undefined;
 
     await user.save();
-    sendCookieWithToken(user, res, 200, "Logged in successfully");
+    sendCookieWithToken(user, res);
+    res.status(201).json({ message: "Logged in successful" });
   }),
 };
 

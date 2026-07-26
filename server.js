@@ -23,7 +23,7 @@ const DB = process.env.DATABASE.replace(
 );
 mongoose
   .connect(DB)
-  .then(() => console.log("Datebase connected successfully!"));
+  .then(() => console.log("Database connected successfully!"));
 
 // starts listening to the port
 const port = process.env.PORT;

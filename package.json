@@ -6,9 +6,9 @@
     "start": "nodemon server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Akshat Sharma",
   "license": "ISC",
-  "description": "This is ",
+  "description": "A modern full-stack social media platform built with Node.js, Express, MongoDB, and React, featuring authentication, posts, comments, image uploads, and real-time ready architecture.",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",

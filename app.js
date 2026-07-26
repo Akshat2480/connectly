@@ -4,7 +4,7 @@ const app = express();
 
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
-const commmentRouter = require("./Routes/commentRoutes");
+const commentRouter = require("./Routes/commentRoutes");
 const globalErrorHandler = require("./controller/errorController.js");
 
 app.use(express.json());
@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
-app.use("/api/v1/comments", commmentRouter);
+app.use("/api/v1/comments", commentRouter);
 
 app.use(globalErrorHandler);
 
