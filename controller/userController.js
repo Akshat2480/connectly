@@ -51,6 +51,19 @@ const userController = {
     });
   }),
 
+  deleteMe: asyncCatch(async (req, res, next) => {
+    const { password } = req.body;
+    const user = await User.findById(req.user.id).select("+password");
+
+    if (!user || !(await user.correctPassword(password)))
+      return next(new AppError("Invalid credentials", 401));
+
+    user.active = false;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(204).send();
+  }),
+
   getUser: asyncCatch(async (req, res, next) => {
     const user = await User.findById(req.params.id)
       .populate({

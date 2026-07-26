@@ -23,6 +23,7 @@ router.patch(
   userController.resizeUserPhoto,
   userController.updateMe,
 );
+router.delete("/me", authController.protect, userController.deleteMe);
 
 router.patch("/:id/follow", authController.protect, userController.followUser);
 router.use("/:userId/posts", postRouter);
