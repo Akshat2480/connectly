@@ -1,9 +1,13 @@
 const jwt = require("jsonwebtoken");
-const expressSession = require("express-session");
+const { convert } = require("html-to-text");
+const crypto = require("crypto");
 
 const User = require("../models/userModel");
 const AsyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
+const { sendEmail } = require("../utils/email");
+const welcomeTemplate = require("../utils/templates/welcomeTemplate");
+const resetPasswordTemplate = require("../utils/templates/resetPasswordTemplate");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -33,8 +37,20 @@ const authController = {
       password,
       passwordConfirm,
     });
+
     // 2) Generate a JWT token and send it as cookie
     sendCookieWithToken(newUser, res, 201, "Sign up successful");
+
+    // 3) Send email to the user
+    // await sendEmail({
+    //   to: newUser.email,
+    //   subject: "Welcome to Connectly!",
+    //   html: welcomeTemplate(newUser.name),
+    //   text: convert(this.html),
+    // }).catch((err) => {
+    //   console.log(err);
+    //   console.error("Unable to send email");
+    // });
   }),
 
   login: AsyncCatch(async (req, res, next) => {
@@ -100,6 +116,62 @@ const authController = {
 
     // Grant access to protected route
     next();
+  }),
+
+  forgotPassword: AsyncCatch(async (req, res, next) => {
+    // 1) get user from email
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) return next(new AppError("No user found with given email", 404));
+
+    // 2) create token and url
+    const resetToken = user.createPasswordResetToken();
+    const resetUrl = `${req.protocol}://${req.get("host")}/api/v1/users/resetPassword/${resetToken}`;
+    // 3) save token and token expiry to db
+    await user.save({ validateBeforeSave: false });
+
+    // 4) send the reset url to user email
+    await sendEmail({
+      to: email,
+      subject: "Your password reset link (Valid for 10min)",
+      html: resetPasswordTemplate(user.name, resetUrl, resetToken),
+      text: convert(this.html),
+    });
+
+    // Send response
+    res.status(200).json({
+      status: "success",
+      message: "Password reset link has been sent to your email",
+    });
+  }),
+
+  resetPassword: AsyncCatch(async (req, res, next) => {
+    // 1) create hashedtoken
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.resetToken)
+      .digest("hex");
+
+    // 2) find user from hashedtoken and check token expiry
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return next(new AppError("Reset link is invalid or expired", 404));
+
+    // 3) update user password
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+
+    // 4) remove reset fields
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+    sendCookieWithToken(user, res, 200, "Logged in successfully");
   }),
 };
 

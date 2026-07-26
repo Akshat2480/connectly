@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.post("/register", authController.register);
 router.post("/login", authController.login);
+router.post("/forgotPassword", authController.forgotPassword);
+router.post("/resetPassword/:resetToken", authController.resetPassword);
 
 router.get(
   "/me",
@@ -21,10 +23,9 @@ router.patch(
   userController.resizeUserPhoto,
   userController.updateMe,
 );
+
 router.patch("/:id/follow", authController.protect, userController.followUser);
-
 router.use("/:userId/posts", postRouter);
-
 router.get("/:id", userController.getUser);
 
 module.exports = router;

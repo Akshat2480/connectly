@@ -1,13 +1,14 @@
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 
+// .env files loaded
+dotenv.config({ path: "./.env", quiet: true });
+
 require("./models/userModel");
 require("./models/postModel");
 require("./models/commentModel");
 const app = require("./app");
 
-// .env files loaded
-dotenv.config({ path: "./.env", quiet: true });
 
 // Uncaught Expeption
 process.on("uncaughtException", (err) => {

@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     passwordChangedAt: Date,
     passwordResetToken: String,
-    passwordResetExpires: String,
+    passwordResetExpires: Date,
     active: {
       type: Boolean,
       default: true,
