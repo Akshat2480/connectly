@@ -1,9 +1,6 @@
-const AppError = require("../utils/AppError");
-
 const sendErrorDev = (err, req, res) => {
   res.status(err.statusCode).json({
     status: err.status,
-    error: err,
     message: err.message,
     stack: err.stack,
   });
@@ -22,7 +19,7 @@ const sendErrorProd = (err, req, res) => {
   console.error("ERROR 💥", err);
   return res.status(500).json({
     status: "error",
-    message: "Something went wrong",
+    message: "Something went very wrong...",
   });
 };
 
@@ -33,8 +30,7 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === "development") {
     sendErrorDev(err, req, res);
   } else if (process.env.NODE_ENV === "production") {
-    let error = Object.assign(Object.create(Object.getPrototypeOf(err)), err);
-    error.message = err.message;
+    const error = Object.assign({}, err);
     sendErrorProd(error, req, res);
   }
 };

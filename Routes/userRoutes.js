@@ -3,12 +3,35 @@ const userController = require("../controller/userController");
 const authController = require("../controller/authController");
 const postRouter = require("../Routes/postRoutes");
 
+const {
+  registerValidator,
+  loginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+} = require("../validators/authValidator");
+const {
+  updateMeValidator,
+  getUserValidator,
+  followUserValidator,
+} = require("../validators/userValidator");
+const validate = require("../utils/validate");
+
 const router = express.Router();
 
-router.post("/register", authController.register);
-router.post("/login", authController.login);
-router.post("/forgotPassword", authController.forgotPassword);
-router.post("/resetPassword/:resetToken", authController.resetPassword);
+router.post("/register", registerValidator, validate, authController.register);
+router.post("/login", loginValidator, validate, authController.login);
+router.post(
+  "/forgotPassword",
+  forgotPasswordValidator,
+  validate,
+  authController.forgotPassword,
+);
+router.post(
+  "/resetPassword/:resetToken",
+  resetPasswordValidator,
+  validate,
+  authController.resetPassword,
+);
 
 router.get(
   "/me",
@@ -21,12 +44,21 @@ router.patch(
   authController.protect,
   userController.uploadUserPhoto,
   userController.resizeUserPhoto,
+  updateMeValidator,
+  validate,
   userController.updateMe,
 );
 router.delete("/me", authController.protect, userController.deleteMe);
 
-router.patch("/:id/follow", authController.protect, userController.followUser);
+router.patch(
+  "/:id/follow",
+  authController.protect,
+  followUserValidator,
+  validate,
+  userController.followUser,
+);
+router.get("/:id", getUserValidator, validate, userController.getUser);
+
 router.use("/:userId/posts", postRouter);
-router.get("/:id", userController.getUser);
 
 module.exports = router;
