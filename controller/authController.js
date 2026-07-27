@@ -17,15 +17,16 @@ const signToken = (id) => {
 };
 const sendCookieWithToken = (user, res) => {
   const token = signToken(user.id);
+  const isProd = process.env.NODE_ENV === "production";
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "none",
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd,
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
     ),
     maxAge: process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
   };
-  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
   res.cookie("jwt", token, cookieOptions);
 };
 
@@ -138,13 +139,25 @@ const authController = {
     await user.save({ validateBeforeSave: false });
 
     // 4) send the reset url to user email
-    const html = resetPasswordTemplate(user.name, resetUrl, resetToken);
-    await sendEmail({
-      to: email,
-      subject: "Your password reset link (Valid for 10min)",
-      html,
-      text: convert(html),
-    });
+    try {
+      const html = resetPasswordTemplate(user.name, resetUrl, resetToken);
+      await sendEmail({
+        to: email,
+        subject: "Your password reset link (Valid for 10min)",
+        html,
+        text: convert(html),
+      });
+    } catch (err) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      return next(
+        new AppError(
+          "There was an error sending email. Please try again later!",
+          500,
+        ),
+      );
+    }
 
     // Send response
     res.status(200).json({
@@ -176,10 +189,10 @@ const authController = {
     // 4) remove reset fields
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-
     await user.save();
+
     sendCookieWithToken(user, res);
-    res.status(201).json({ message: "Logged in successful" });
+    res.status(200).json({ message: "Logged in successful" });
   }),
 };
 

@@ -26,6 +26,7 @@ router
   );
 
 router.use("/:postId/comments", commentRouter);
+
 router.patch(
   "/:id/like",
   authController.protect,
