@@ -6,15 +6,18 @@ const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
 const commentRouter = require("./Routes/commentRoutes");
 const globalErrorHandler = require("./controller/errorController.js");
+const morgan = require("morgan");
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(`${__dirname}/public`))
+app.use(express.static(`${__dirname}/public`));
 
 app.use((req, res, next) => {
   // console.log(req.cookies);
   next();
 });
+
+if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
