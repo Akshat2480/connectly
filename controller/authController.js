@@ -95,7 +95,7 @@ const authController = {
     }
 
     // 2) Verify token
-    const decoded = await promisify(jwt.verify(token, process.env.JWT_SECRET));
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
     // 3) Check if the user exists
     req.user = await User.findById(decoded.id);
