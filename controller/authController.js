@@ -46,11 +46,12 @@ const authController = {
     res.status(201).json({ message: "Signed up successful" });
 
     // 3) Send email to the user
+    const html = welcomeTemplate(newUser.name);
     // await sendEmail({
     //   to: newUser.email,
     //   subject: "Welcome to Connectly!",
-    //   html: welcomeTemplate(newUser.name),
-    //   text: convert(this.html),
+    //   html,
+    //   text: convert(html),
     // }).catch((err) => {
     //   console.log(err);
     //   console.error("Unable to send email");
@@ -137,11 +138,12 @@ const authController = {
     await user.save({ validateBeforeSave: false });
 
     // 4) send the reset url to user email
+    const html = resetPasswordTemplate(user.name, resetUrl, resetToken);
     await sendEmail({
       to: email,
       subject: "Your password reset link (Valid for 10min)",
-      html: resetPasswordTemplate(user.name, resetUrl, resetToken),
-      text: convert(this.html),
+      html,
+      text: convert(html),
     });
 
     // Send response

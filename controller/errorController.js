@@ -1,9 +1,11 @@
+const AppError = require("../utils/AppError");
+
 const sendErrorDev = (err, req, res) => {
   res.status(err.statusCode).json({
     status: err.status,
     message: err.message,
     errors: err.errors,
-    stack: err.stack,
+    err,
   });
 };
 
@@ -30,8 +32,21 @@ module.exports = (err, req, res, next) => {
 
   if (process.env.NODE_ENV === "development") {
     sendErrorDev(err, req, res);
-  } else if (process.env.NODE_ENV === "production") {
-    const error = Object.assign({}, err);
+  } else {
+    let error = Object.assign({}, err);
+
+    if (err.name === "JsonWebTokenError")
+      error = new AppError("Invalid token, please log in again", 401);
+    if (err.name === "TokenExpiredError")
+      error = new AppError("Your token has expired, please log in again", 401);
+    if (err.code === 11000) {
+      if (err.code === 11000) {
+        const field = Object.keys(err.keyValue)[0];
+        const value = err.keyValue[field];
+        error = new AppError(`Already in use (${field} : ${value} )`, 400);
+      }
+    }
+
     sendErrorProd(error, req, res);
   }
 };
