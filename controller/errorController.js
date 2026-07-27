@@ -2,6 +2,7 @@ const sendErrorDev = (err, req, res) => {
   res.status(err.statusCode).json({
     status: err.status,
     message: err.message,
+    errors: err.errors,
     stack: err.stack,
   });
 };

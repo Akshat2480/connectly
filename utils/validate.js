@@ -3,12 +3,15 @@ const AppError = require("./AppError");
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
-
   if (errors.isEmpty()) return next();
 
-  let message = errors.errors.map((error) => `${error.path} : ${error.msg}`);
+  console.log(errors);
+  const structuredErrors = errors.array().map((error) => ({
+    field: error.path,
+    message: error.msg,
+  }));
 
-  next(new AppError(message, 400));
+  next(new AppError("Validation failed", 400, structuredErrors));
 };
 
 module.exports = validate;
