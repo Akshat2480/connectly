@@ -24,8 +24,8 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 app.use(helmet());
-app.use(mongoSanitize());
-app.use(xss());
+// app.use(mongoSanitize());
+// app.use(xss());
 app.use(hpp());
 app.use(cors());
 

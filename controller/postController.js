@@ -1,20 +1,10 @@
 const fs = require("fs");
-const multer = require("multer");
 const sharp = require("sharp");
-
+const upload = require("../utils/upload");
 const factory = require("./factoryController");
 const Post = require("../models/postModel");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
-
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image")) cb(null, true);
-  else cb(new AppError("You are only allowed to upload images", 400), false);
-};
-
-const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
 
 const postController = {
   getPosts: factory.getAll(Post),

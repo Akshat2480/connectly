@@ -1,10 +1,12 @@
-const multer = require("multer");
 const sharp = require("sharp");
-
-const factory = require("./factoryController");
 const User = require("../models/userModel");
+const factory = require("./factoryController");
+
+const upload = require("../utils/upload");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
+const cloudinary = require("../utils/cloudinary");
+const uploadToCloudinary = require("../utils/uploadToCloudinary");
 
 const filterObject = (obj, allowedField) => {
   const newObj = {};
@@ -13,15 +15,6 @@ const filterObject = (obj, allowedField) => {
   });
   return newObj;
 };
-
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image")) cb(null, true);
-  else cb(new AppError("The file type must be a image", 400), false);
-};
-
-const upload = multer({ storage: multerStorage, fileFilter: multerFilter });
 
 const userController = {
   getMe: (req, res, next) => {
@@ -38,11 +31,38 @@ const userController = {
         ),
       );
     }
-    const filterBody = filterObject(req.body, ["name", "photo"]);
+    const filterBody = filterObject(req.body, ["name"]);
 
-    const updatedUser = await User.findByIdAndUpdate(req.user.id, filterBody, {
-      returnDocument: "after",
-    });
+    let currentUser;
+    let uploadedImage;
+    if (req.file) {
+      currentUser = await User.findById(req.user.id).select("+photoPublicId");
+      uploadedImage = await uploadToCloudinary(
+        req.file.buffer,
+        "connectly/users",
+      );
+      filterBody.photo = uploadedImage.secure_url;
+      filterBody.photoPublicId = uploadedImage.public_id;
+    }
+
+    let updatedUser;
+    try {
+      updatedUser = await User.findByIdAndUpdate(req.user.id, filterBody, {
+        returnDocument: "after",
+        runValidators: true,
+      });
+    } catch (err) {
+      if (uploadedImage?.public_id) {
+        await cloudinary.uploader.destroy(uploadedImage.public_id);
+        return next(new AppError("There was a problem updating the user"));
+      }
+    }
+
+    if (currentUser.photoPublicId)
+      await cloudinary.uploader
+        .destroy(currentUser.photoPublicId)
+        .catch((err) => console.log("Failed to delete old profile image"));
+
     res.status(200).json({
       status: "success",
       data: {
@@ -123,13 +143,12 @@ const userController = {
 
   resizeUserPhoto: asyncCatch(async (req, res, next) => {
     if (!req.file) return next();
-    req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-    req.body.photo = req.file.filename;
-    await sharp(req.file.buffer)
+
+    req.file.butter = await sharp(req.file.buffer)
       .resize(500, 500)
       .toFormat("jpeg")
       .jpeg({ quality: 90 })
-      .toFile(`public/img/users/${req.file.filename}`);
+      .toBuffer();
     next();
   }),
 };
