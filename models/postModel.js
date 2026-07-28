@@ -24,7 +24,18 @@ const postSchema = new mongoose.Schema(
       default: Date.now,
     },
     images: {
-      type: [String],
+      type: [
+        {
+          url: {
+            type: String,
+            required: true,
+          },
+          publicId: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
       default: [],
     },
   },

@@ -1,10 +1,12 @@
 const fs = require("fs");
 const sharp = require("sharp");
-const upload = require("../utils/upload");
+
 const factory = require("./factoryController");
 const Post = require("../models/postModel");
+const upload = require("../utils/upload");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
+const uploadToCloudinary = require("../utils/uploadToCloudinary");
 
 const postController = {
   getPosts: factory.getAll(Post),
@@ -37,27 +39,41 @@ const postController = {
     });
   }),
 
-  uploadPostImage: upload.array("images", 5),
+  uploadPostImages: upload.array("images", 5),
 
   resizePostImages: asyncCatch(async (req, res, next) => {
     if (!req.files || req.files.length === 0) return next();
 
-    req.body.images = [];
-
     await Promise.all(
-      req.files.map(async (file, i) => {
-        const filename = `post-${req.user.id}-${Date.now()}-${i}.jpeg`;
-
-        await sharp(file.buffer)
-          .resize(1000, 1000, { fit: "inside" })
+      req.files.map(async (file) => {
+        file.buffer = await sharp(file.buffer)
+          .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
           .toFormat("jpeg")
-          .jpeg({ quality: 90 })
-          .toFile(`public/img/posts/${filename}`);
-
-        req.body.images.push(filename);
+          .jpeg({ quality: 85 })
+          .toBuffer();
       }),
     );
 
+    next();
+  }),
+
+  uploadPostsToCloudinary: asyncCatch(async (req, res, next) => {
+    if (!req.files || req.files.length === 0) return next();
+
+    const uploadedImages = await Promise.all(
+      req.files.map(async (file) => {
+        const uploaded = await uploadToCloudinary(
+          file.buffer,
+          "connectly/posts",
+        );
+        return {
+          url: uploaded.secure_url,
+          publicId: uploaded.public_id,
+        };
+      }),
+    );
+
+    req.body.images = uploadedImages;
     next();
   }),
 };

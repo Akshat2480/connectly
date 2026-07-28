@@ -7,6 +7,7 @@ const sendErrorDev = (err, req, res) => {
     errors: err.errors,
     err,
   });
+  console.log(err);
 };
 
 const sendErrorProd = (err, req, res) => {

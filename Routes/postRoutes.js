@@ -18,8 +18,9 @@ router
   .get(postController.getPosts)
   .post(
     authController.protect,
-    postController.uploadPostImage,
+    postController.uploadPostImages,
     postController.resizePostImages,
+    postController.uploadPostsToCloudinary,
     createPostValidator,
     validate,
     postController.createPost,

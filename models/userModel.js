@@ -19,7 +19,8 @@ const userSchema = new mongoose.Schema(
     },
     photo: {
       type: String,
-      default: "default.jpg",
+      default:
+        "https://res.cloudinary.com/mbeptgiz/image/upload/v1785220395/connectly/users/hpggdtxceavjkdnhk4xu.jpg",
     },
     photoPublicId: {
       type: String,
