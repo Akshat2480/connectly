@@ -7,6 +7,9 @@ const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 const cloudinary = require("../utils/cloudinary");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
+const AsyncCatch = require("../utils/AsyncCatch");
+const Post = require("../models/postModel");
+const APIFeatures = require("../utils/apiFeatures");
 
 const filterObject = (obj, allowedField) => {
   const newObj = {};
@@ -150,6 +153,26 @@ const userController = {
       .jpeg({ quality: 90 })
       .toBuffer();
     next();
+  }),
+
+  getFeed: AsyncCatch(async (req, res, next) => {
+    const authorIds = [...req.user.following, req.user.id];
+
+    const feedQuery = Post.find({ author: { $in: authorIds } });
+    const features = new APIFeatures(feedQuery.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const posts = await features.query;
+
+    res.status(200).json({
+      status: "success",
+      results: posts.length,
+      feed: {
+        posts,
+      },
+    });
   }),
 };
 

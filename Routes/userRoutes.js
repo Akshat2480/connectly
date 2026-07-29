@@ -51,6 +51,8 @@ router.patch(
 );
 router.delete("/me", authController.protect, userController.deleteMe);
 
+router.get("/feed", authController.protect, userController.getFeed);
+
 router.patch(
   "/:id/follow",
   authController.protect,
