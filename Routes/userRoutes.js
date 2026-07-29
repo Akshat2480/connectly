@@ -20,6 +20,7 @@ const router = express.Router();
 
 router.post("/register", registerValidator, validate, authController.register);
 router.post("/login", loginValidator, validate, authController.login);
+router.post("/logout", authController.protect, authController.logout);
 router.post(
   "/forgotPassword",
   forgotPasswordValidator,

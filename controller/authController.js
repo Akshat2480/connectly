@@ -80,6 +80,19 @@ const authController = {
     res.status(200).json({ message: "Logged in successful" });
   }),
 
+  logout: AsyncCatch(async (req, res, next) => {
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      sameSite: isProd ? "none" : "lax",
+      secure: isProd,
+      maxAge: process.env.JWT_COOKIE_EXPIRES_IN * 10 * 1000,
+    };
+    res.cookie("jwt", "logged-out", cookieOptions);
+
+    res.status(200).json({ message: "Logged out successful" });
+  }),
+
   protect: AsyncCatch(async (req, res, next) => {
     // 1) Get token from request
     let token;
