@@ -52,8 +52,18 @@ commentSchema.pre(/^find/, function () {
   });
   this.populate({
     path: "replies",
-    select: "text author createdAt -parentCommentw",
+    select: "text author createdAt",
   });
+});
+
+// Auto delete all the replies of the comment before deleting the comment
+commentSchema.pre("findOneAndDelete", async function () {
+  const comment = await this.model.findOne(this.getFilter());
+
+  if (comment) {
+    await this.model.deleteMany({ parentComment: comment._id });
+  }
+
 });
 
 const Comment = mongoose.model("Comment", commentSchema);

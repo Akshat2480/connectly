@@ -65,6 +65,17 @@ postSchema.pre(/^find/, function () {
   });
 });
 
+// // Auto delete all the comments of the post before deleting the post
+postSchema.pre("findOneAndDelete", async function () {
+  const post = await this.model.findOne(this.getFilter());
+
+  if (post) {
+    const Comment = require("./commentModel");
+    await Comment.deleteMany({ post: post._id });
+  }
+
+});
+
 const Post = mongoose.model("Post", postSchema);
 
 module.exports = Post;
