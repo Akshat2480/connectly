@@ -171,11 +171,27 @@ const userController = {
       .sort()
       .limitFields()
       .paginate();
-    const posts = await features.query;
+
+    const matchedFilter = features.query.getFilter();
+
+    const [posts, totalResults] = await Promise.all([
+      features.query,
+      User.countDocuments(matchedFilter),
+    ]);
+
+    const page = features.page;
+    const limit = features.limit;
+    const totalPages = Math.ceil(totalResults / limit);
 
     res.status(200).json({
       status: "success",
       results: posts.length,
+      pagination: {
+        page,
+        limit,
+        totalResults,
+        totalPages,
+      },
       feed: {
         posts,
       },

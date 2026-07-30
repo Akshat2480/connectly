@@ -17,11 +17,27 @@ const factory = {
         .sort()
         .limitFields()
         .paginate();
-      const doc = await features.query;
+
+      const matchedFilter = features.query.getFilter();
+
+      const [doc, totalResults] = await Promise.all([
+        features.query,
+        Model.countDocuments(matchedFilter),
+      ]);
+
+      const page = features.page;
+      const limit = features.limit;
+      const totalPages = Math.ceil(totalResults / limit);
 
       res.status(200).json({
         status: "success",
         results: doc.length,
+        pagination: {
+          page,
+          limit,
+          totalResults,
+          totalPages,
+        },
         data: {
           data: doc,
         },

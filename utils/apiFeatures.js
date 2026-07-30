@@ -48,6 +48,9 @@ class APIFeatures {
     const limit = Math.min(requestedLimit, MAX_LIMIT);
     const skip = (page - 1) * limit;
 
+    this.page = page;
+    this.limit = limit;
+
     this.query = this.query.skip(skip).limit(limit);
     return this;
   }
