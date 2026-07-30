@@ -52,19 +52,8 @@ const factory = {
         }
       });
       filteredBody.author = req.user.id;
-      if (req.params.postId) filteredBody.post = req.params.postId;
 
       const doc = await Model.create(filteredBody);
-
-      if (req.params.postId) {
-        const post = await Post.findById(req.params.postId);
-        await sendNotification({
-          recipient: post.author,
-          sender: req.user.id,
-          type: "comment",
-          post: req.params.postId,
-        });
-      }
 
       res.status(201).json({
         status: "success",

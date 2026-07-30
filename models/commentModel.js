@@ -22,6 +22,11 @@ const commentSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    parentComment: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -31,12 +36,23 @@ const commentSchema = new mongoose.Schema(
 
 // Index for fast lookup of all comments on a given post
 commentSchema.index({ post: 1 });
+commentSchema.index({ parentComment: 1 });
+
+commentSchema.virtual("replies", {
+  ref: "Comment",
+  foreignField: "parentComment",
+  localField: "_id",
+});
 
 // Auto-populate author on every find query
 commentSchema.pre(/^find/, function () {
   this.populate({
     path: "author",
     select: "name photo",
+  });
+  this.populate({
+    path: "replies",
+    select: "text author createdAt -parentComment -replies",
   });
 });
 
