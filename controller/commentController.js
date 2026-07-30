@@ -37,12 +37,21 @@ const commentController = {
       parentComment: parentComment?.id || null,
     });
 
-    await sendNotification({
-      recipient: post.author,
-      sender: req.user.id,
-      type: "comment",
-      post: postId,
-    });
+    if (parentComment !== null) {
+      await sendNotification({
+        recipient: parentComment.author,
+        sender: req.user.id,
+        type: "reply",
+        post: postId,
+      });
+    } else {
+      await sendNotification({
+        recipient: post.author,
+        sender: req.user.id,
+        type: "comment",
+        post: postId,
+      });
+    }
 
     res.status(201).json({
       status: "success",

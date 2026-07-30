@@ -52,7 +52,7 @@ commentSchema.pre(/^find/, function () {
   });
   this.populate({
     path: "replies",
-    select: "text author createdAt -parentComment -replies",
+    select: "text author createdAt -parentCommentw",
   });
 });
 
