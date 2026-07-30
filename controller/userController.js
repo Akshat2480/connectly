@@ -1,5 +1,6 @@
 const sharp = require("sharp");
 const User = require("../models/userModel");
+const Post = require("../models/postModel");
 const factory = require("./factoryController");
 
 const upload = require("../utils/upload");
@@ -8,8 +9,8 @@ const AppError = require("../utils/AppError");
 const cloudinary = require("../utils/cloudinary");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const AsyncCatch = require("../utils/AsyncCatch");
-const Post = require("../models/postModel");
 const APIFeatures = require("../utils/apiFeatures");
+const sendNotification = require("../utils/sendNotification");
 
 const filterObject = (obj, allowedField) => {
   const newObj = {};
@@ -134,6 +135,12 @@ const userController = {
         { _id: currUser.id },
         { $addToSet: { following: req.params.id } },
       );
+
+      await sendNotification({
+        recipient: req.params.id,
+        sender: req.user.id,
+        type: "follow",
+      });
     }
 
     res.status(200).json({

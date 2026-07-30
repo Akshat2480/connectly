@@ -1,6 +1,9 @@
+const Post = require("../models/postModel");
+
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 const ApiFeature = require("../utils/apiFeatures");
+const sendNotification = require("../utils/sendNotification");
 
 const factory = {
   getAll: (Model) =>
@@ -52,6 +55,16 @@ const factory = {
       if (req.params.postId) filteredBody.post = req.params.postId;
 
       const doc = await Model.create(filteredBody);
+
+      if (req.params.postId) {
+        const post = await Post.findById(req.params.postId);
+        await sendNotification({
+          recipient: post.author,
+          sender: req.user.id,
+          type: "comment",
+          post: req.params.postId,
+        });
+      }
 
       res.status(201).json({
         status: "success",
