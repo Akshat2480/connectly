@@ -96,7 +96,7 @@ const postController = {
         $options: "i",
       },
     });
-    if (!posts)
+    if (posts.length === 0)
       return next(new AppError("No post found with such content", 400));
 
     res.status(200).json({
