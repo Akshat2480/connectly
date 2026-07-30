@@ -26,6 +26,12 @@ router
     postController.createPost,
   );
 
+router.get(
+  "/searchByContent",
+  authController.protect,
+  postController.searchPostByContent,
+);
+
 router.use("/:postId/comments", commentRouter);
 
 router.patch(

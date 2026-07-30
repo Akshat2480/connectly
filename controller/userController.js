@@ -181,6 +181,29 @@ const userController = {
       },
     });
   }),
+
+  searchUsersByName: AsyncCatch(async (req, res, next) => {
+    const { name } = req.query;
+    if (!name)
+      return next(
+        new AppError(
+          "Enter the name of the user you are searching for...",
+          400,
+        ),
+      );
+
+    const users = await User.find({ name: { $regex: name, $options: "i" } });
+    if (users.length === 0)
+      return next(new AppError("No user found with given name", 400));
+
+    res.status(200).json({
+      status: "success",
+      results: users.length,
+      data: {
+        users,
+      },
+    });
+  }),
 };
 
 module.exports = userController;

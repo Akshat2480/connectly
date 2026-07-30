@@ -50,6 +50,11 @@ router.patch(
   userController.updateMe,
 );
 router.delete("/me", authController.protect, userController.deleteMe);
+router.get(
+  "/searchByName",
+  authController.protect,
+  userController.searchUsersByName,
+);
 
 router.get("/feed", authController.protect, userController.getFeed);
 

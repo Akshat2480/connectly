@@ -84,6 +84,29 @@ const postController = {
     req.body.images = uploadedImages;
     next();
   }),
+
+  searchPostByContent: asyncCatch(async (req, res, next) => {
+    const { content } = req.query;
+    if (!content)
+      return next(new AppError("Enter the content you are searching for..."));
+
+    const posts = await Post.find({
+      content: {
+        $regex: content,
+        $options: "i",
+      },
+    });
+    if (!posts)
+      return next(new AppError("No post found with such content", 400));
+
+    res.status(200).json({
+      status: "success",
+      results: posts.length,
+      data: {
+        posts,
+      },
+    });
+  }),
 };
 
 module.exports = postController;
