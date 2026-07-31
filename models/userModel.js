@@ -120,12 +120,20 @@ userSchema.methods.createPasswordResetToken = function () {
 
 const User = mongoose.model("User", userSchema);
 
-userSchema.pre("findOneAndDelete", async function () {
-  const user = await this.model.findOne(this.getFilter());
-
-  if (user) {
+userSchema.pre("save", async function () {
+  if (this.isModified("active") && !this.active) {
     const Post = require("./postModel");
-    await Post.deleteMany({ author: user._id });
+    const Comment = require("./commentModel");
+
+    const posts = await Post.find({ author: this._id }).select("_id");
+    for (const post of posts) {
+      await Post.findByIdAndDelete(post._id);
+    }
+
+    const comments = await Comment.find({ author: this._id }).select("_id");
+    for (const comment of comments) {
+      await Comment.findByIdAndDelete(comment._id);
+    }
   }
 });
 
