@@ -120,4 +120,13 @@ userSchema.methods.createPasswordResetToken = function () {
 
 const User = mongoose.model("User", userSchema);
 
+userSchema.pre("findOneAndDelete", async function () {
+  const user = await this.model.findOne(this.getFilter());
+
+  if (user) {
+    const Post = require("./postModel");
+    await Post.deleteMany({ author: user._id });
+  }
+});
+
 module.exports = User;
