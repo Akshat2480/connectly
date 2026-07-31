@@ -13,6 +13,8 @@ const {
   updateMeValidator,
   getUserValidator,
   followUserValidator,
+  searchUserValidator,
+  deleteMeValidator,
 } = require("../validators/userValidator");
 const validate = require("../utils/validate");
 
@@ -49,10 +51,18 @@ router.patch(
   validate,
   userController.updateMe,
 );
-router.delete("/me", authController.protect, userController.deleteMe);
+router.delete(
+  "/me",
+  authController.protect,
+  deleteMeValidator,
+  validate,
+  userController.deleteMe,
+);
 router.get(
   "/searchByName",
   authController.protect,
+  searchUserValidator,
+  validate,
   userController.searchUsersByName,
 );
 

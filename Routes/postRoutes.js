@@ -8,6 +8,7 @@ const {
   deletePostValidator,
   getPostValidator,
   likePostValidator,
+  searchPostValidator,
 } = require("../validators/postValidator");
 const validate = require("../utils/validate");
 
@@ -29,6 +30,8 @@ router
 router.get(
   "/searchByContent",
   authController.protect,
+  searchPostValidator,
+  validate,
   postController.searchPostByContent,
 );
 

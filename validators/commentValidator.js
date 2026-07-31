@@ -10,6 +10,11 @@ exports.createCommentValidator = [
     .withMessage("Comment cannot be empty")
     .isLength({ max: 300 })
     .withMessage("Comment cannot exceed 300 characters"),
+
+  body("parentComment")
+    .optional({ nullable: true })
+    .isMongoId()
+    .withMessage("Invalid parent comment id"),
 ];
 
 exports.getCommentValidator = [mongoId()];
