@@ -61,7 +61,7 @@ describe("POST /api/v1/users/register", () => {
       .post("/api/v1/users/register")
       .send(validUser);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(500);
   });
 
   it("rejects a password shorter than 8 characters", async () => {

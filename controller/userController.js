@@ -62,7 +62,7 @@ const userController = {
       }
     }
 
-    if (currentUser.photoPublicId)
+    if (currentUser?.photoPublicId)
       await cloudinary.uploader
         .destroy(currentUser.photoPublicId)
         .catch((err) => console.log("Failed to delete old profile image"));
