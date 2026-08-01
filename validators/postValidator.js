@@ -10,7 +10,7 @@ exports.createPostValidator = [
     .withMessage("Post cannot exceed 500 characters"),
 ];
 
-xports.updatePostValidator = [
+exports.updatePostValidator = [
   mongoId("id"),
 
   body("content")
