@@ -6,8 +6,7 @@ const sendErrorDev = (err, req, res) => {
     message: err.message,
     err,
   };
-  console.log(err.errors);
-  if (err.errors !== null) response.errors = err.errors;
+  if (err.errors) response.errors = err.errors;
 
   res.status(err.statusCode).json(response);
   console.log(err);
@@ -16,10 +15,12 @@ const sendErrorDev = (err, req, res) => {
 const sendErrorProd = (err, req, res) => {
   // Operational, trusted error: send message to client
   if (err.isOperational) {
-    return res.status(err.statusCode).json({
+    const response = {
       status: err.status,
       message: err.message,
-    });
+    }
+    if(err.errors) response.errors = err.errors
+    return res.status(err.statusCode).json(response);
   }
 
   // Programming or unknown error: don't leak details
