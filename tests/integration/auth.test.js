@@ -86,6 +86,27 @@ describe("POST /api/v1/users/register", () => {
 
     expect(res.status).toBe(400);
   });
+
+  it("rejects a missing email", async () => {
+    const { email, ...rest } = validUser;
+    const res = await request(app).post("/api/v1/users/register").send(rest);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing password", async () => {
+    const { password, ...rest } = validUser;
+    const res = await request(app).post("/api/v1/users/register").send(rest);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing passwordConfirm", async () => {
+    const { passwordConfirm, ...rest } = validUser;
+    const res = await request(app).post("/api/v1/users/register").send(rest);
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("POST /api/v1/users/login", () => {
@@ -123,6 +144,22 @@ describe("POST /api/v1/users/login", () => {
     const res = await request(app)
       .post("/api/v1/users/login")
       .send({ email: "not-an-email", password: validUser.password });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an missing email", async () => {
+    const res = await request(app)
+      .post("/api/v1/users/login")
+      .send({ password: validUser.password });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects an missing password", async () => {
+    const res = await request(app)
+      .post("/api/v1/users/login")
+      .send({ email: validUser.email });
 
     expect(res.status).toBe(400);
   });
@@ -177,6 +214,22 @@ describe("POST /api/v1/users/forgotPassword", () => {
 
     expect(res.status).toBe(404);
     expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid email format", async () => {
+    const res = await request(app)
+      .post("/api/v1/users/forgotPassword")
+      .send({ email: "not-an-email" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing email", async () => {
+    const res = await request(app)
+      .post("/api/v1/users/forgotPassword")
+      .send({});
+
+    expect(res.status).toBe(400);
   });
 
   it("clears the reset token if sending the email fails", async () => {
@@ -255,6 +308,30 @@ describe("POST /api/v1/users/resetPassword/:resetToken", () => {
     const res = await request(app)
       .post(`/api/v1/users/resetPassword/${resetToken}`)
       .send({ password: "newpassword123", passwordConfirm: "different" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects password shorter than 8 characters", async () => {
+    const res = await request(app)
+      .post(`/api/v1/users/resetPassword/${resetToken}`)
+      .send({ password: "short", passwordConfirm: "short" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing password", async () => {
+    const res = await request(app)
+      .post(`/api/v1/users/resetPassword/${resetToken}`)
+      .send({ passwordConfirm: "short" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing passwordConfirm", async () => {
+    const res = await request(app)
+      .post(`/api/v1/users/resetPassword/${resetToken}`)
+      .send({ password: "short" });
 
     expect(res.status).toBe(400);
   });
