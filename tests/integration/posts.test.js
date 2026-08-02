@@ -304,6 +304,30 @@ describe("DELETE /api/v1/posts/:id", () => {
     expect(res.status).toBe(401);
   });
 
+  it("rejects a non-owner trying to delete the post", async () => {
+    const { cookie: ownerCookie } = await registerAndLogin({ name: "Owner" });
+    const { cookie: otherCookie } = await registerAndLogin({
+      name: "Intruder",
+    });
+
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", ownerCookie)
+      .send({ content: "Owner's post" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .delete(`/api/v1/posts/${postId}`)
+      .set("Cookie", otherCookie);
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toBe("You are not the author of this post");
+
+    // confirm the post still exists
+    const stillThere = await Post.findById(postId);
+    expect(stillThere).not.toBeNull();
+  });
+
   it("deletes a post owned by the requester", async () => {
     const { cookie } = await registerAndLogin();
     const createRes = await request(app)
@@ -320,5 +344,164 @@ describe("DELETE /api/v1/posts/:id", () => {
 
     const deleted = await Post.findById(postId);
     expect(deleted).toBeNull();
+  });
+});
+
+describe("PATCH /api/v1/posts/:id", () => {
+  it("requires authentication", async () => {
+    const { cookie } = await registerAndLogin();
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .send({ content: "Original content" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .send({ content: "Updated content" });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("updates the content of a post owned by the requester", async () => {
+    const { cookie } = await registerAndLogin();
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .send({ content: "Original content" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .set("Cookie", cookie)
+      .send({ content: "Updated content" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.data.content).toBe("Updated content");
+
+    const updated = await Post.findById(postId);
+    expect(updated.content).toBe("Updated content");
+  });
+
+  it("rejects a non-owner trying to update the post", async () => {
+    const { cookie: ownerCookie } = await registerAndLogin({ name: "Owner" });
+    const { cookie: otherCookie } = await registerAndLogin({
+      name: "Intruder",
+    });
+
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", ownerCookie)
+      .send({ content: "Owner's post" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .set("Cookie", otherCookie)
+      .send({ content: "Hijacked content" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toBe("You are not the author of this post");
+
+    // confirm content was NOT changed
+    const unchanged = await Post.findById(postId);
+    expect(unchanged.content).toBe("Owner's post");
+  });
+
+  it("rejects empty content", async () => {
+    const { cookie } = await registerAndLogin();
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .send({ content: "Original content" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .set("Cookie", cookie)
+      .send({ content: "" });
+
+    expect(res.status).toBe(400);
+
+    const unchanged = await Post.findById(postId);
+    expect(unchanged.content).toBe("Original content");
+  });
+
+  it("rejects content over 500 characters", async () => {
+    const { cookie } = await registerAndLogin();
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .send({ content: "Original content" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .set("Cookie", cookie)
+      .send({ content: "a".repeat(501) });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("allows a partial update with no content field (content is optional)", async () => {
+    const { cookie } = await registerAndLogin();
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .send({ content: "Untouched content" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .set("Cookie", cookie)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.data.content).toBe("Untouched content");
+  });
+
+  it("returns 404 for a non-existent post", async () => {
+    const { cookie } = await registerAndLogin();
+    const fakeId = "64b7a0f1f1a2b3c4d5e6f7a8";
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${fakeId}`)
+      .set("Cookie", cookie)
+      .send({ content: "Doesn't matter" });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("rejects a malformed post id", async () => {
+    const { cookie } = await registerAndLogin();
+
+    const res = await request(app)
+      .patch("/api/v1/posts/not-a-valid-id")
+      .set("Cookie", cookie)
+      .send({ content: "Doesn't matter" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("ignores attempts to update fields other than content", async () => {
+    const { cookie, userId } = await registerAndLogin();
+    const createRes = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .send({ content: "Original content" });
+    const postId = createRes.body.data.data._id;
+
+    const res = await request(app)
+      .patch(`/api/v1/posts/${postId}`)
+      .set("Cookie", cookie)
+      .send({
+        content: "Updated content",
+        author: "64b7a0f1f1a2b3c4d5e6f7a8",
+        likes: ["64b7a0f1f1a2b3c4d5e6f7a8"],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.data.author._id).toBe(userId);
+    expect(res.body.data.data.likes).toEqual([]);
   });
 });

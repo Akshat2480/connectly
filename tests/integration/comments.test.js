@@ -269,6 +269,31 @@ describe("DELETE /api/v1/posts/:postId/comments/:id", () => {
     expect(res.status).toBe(401);
   });
 
+  it("rejects a non-owner trying to delete the comment", async () => {
+    const { cookie: ownerCookie } = await registerAndLogin({ name: "Owner" });
+    const { cookie: otherCookie } = await registerAndLogin({
+      name: "Intruder",
+    });
+
+    const postId = await createPost(ownerCookie);
+    const createRes = await request(app)
+      .post(`/api/v1/posts/${postId}/comments`)
+      .set("Cookie", ownerCookie)
+      .send({ text: "Owner's comment" });
+    const commentId = createRes.body.data.comment._id;
+
+    const res = await request(app)
+      .delete(`/api/v1/posts/${postId}/comments/${commentId}`)
+      .set("Cookie", otherCookie);
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toBe("You are not the author of this post");
+
+    // confirm the comment still exists
+    const stillThere = await Comment.findById(commentId);
+    expect(stillThere).not.toBeNull();
+  });
+
   it("deletes a comment owned by the requester", async () => {
     const { cookie } = await registerAndLogin();
     const postId = await createPost(cookie);
