@@ -1,0 +1,555 @@
+openapi: 3.0.0
+info:
+  title: Connectly API
+  version: 1.0.0
+  description: API documentation for the Connectly social media platform
+
+servers:
+  - url: http://localhost:3000/api/v1
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: jwt
+
+  schemas:
+    Post:
+      type: object
+      properties:
+        _id: { type: string }
+        content: { type: string }
+        author: { type: string }
+        likes:
+          type: array
+          items: { type: string }
+        likesCount: { type: integer }
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string }
+              publicId: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Comment:
+      type: object
+      properties:
+        _id: { type: string }
+        text: { type: string }
+        post: { type: string }
+        author: { type: string }
+        parentComment:
+          type: string
+          nullable: true
+        createdAt: { type: string, format: date-time }
+
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        photo: { type: string }
+        following:
+          type: array
+          items: { type: string }
+
+    Notification:
+      type: object
+      properties:
+        _id: { type: string }
+        recipient: { type: string }
+        sender: { type: string }
+        type:
+          type: string
+          enum: [follow, like, comment, reply]
+        post: { type: string }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    Error:
+      type: object
+      properties:
+        status: { type: string, example: fail }
+        message: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+security:
+  - cookieAuth: []
+
+paths:
+  /users/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, passwordConfirm]
+              properties:
+                name: { type: string, minLength: 3, maxLength: 50 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                passwordConfirm: { type: string }
+      responses:
+        "201":
+          description: Registered successfully, jwt cookie set
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /users/login:
+    post:
+      summary: Log in
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Logged in, jwt cookie set
+        "401":
+          description: Invalid credentials
+
+  /users/logout:
+    post:
+      summary: Log out
+      tags: [Auth]
+      responses:
+        "200":
+          description: Logged out
+
+  /users/forgotPassword:
+    post:
+      summary: Request a password reset email
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Reset email sent
+        "404":
+          description: No user with that email
+
+  /users/resetPassword/{resetToken}:
+    post:
+      summary: Reset password using emailed token
+      tags: [Auth]
+      security: []
+      parameters:
+        - in: path
+          name: resetToken
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password, passwordConfirm]
+              properties:
+                password: { type: string, minLength: 8 }
+                passwordConfirm: { type: string }
+      responses:
+        "200":
+          description: Password reset, logged in
+        "404":
+          description: Invalid or expired token
+
+  /users/me:
+    get:
+      summary: Get current user's profile
+      tags: [Users]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: "#/components/schemas/User" }
+        "401":
+          description: Not authenticated
+    patch:
+      summary: Update current user (name and/or photo)
+      tags: [Users]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: User updated
+        "400":
+          description: Validation error or non-image file
+        "404":
+          description: Attempted to update password via this endpoint
+    delete:
+      summary: Soft-delete current user's account
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "204":
+          description: Account deactivated
+        "401":
+          description: Invalid password
+
+  /users/searchByName:
+    get:
+      summary: Search users by name
+      tags: [Users]
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Matching users
+        "400":
+          description: Missing query or no matches
+
+  /users/feed:
+    get:
+      summary: Get feed of posts from followed users and self
+      tags: [Users]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Feed posts
+
+  /users/{id}/follow:
+    patch:
+      summary: Follow or unfollow a user (toggle)
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Follow state toggled
+        "400":
+          description: Cannot follow yourself
+        "404":
+          description: Target user not found
+
+  /users/{id}:
+    get:
+      summary: Get a user's public profile
+      tags: [Users]
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: User profile
+        "404":
+          description: User not found
+
+  /posts:
+    get:
+      summary: Get all posts
+      tags: [Posts]
+      security: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+        - in: query
+          name: sort
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of posts
+    post:
+      summary: Create a post (with optional images)
+      tags: [Posts]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, maxLength: 500 }
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "201":
+          description: Post created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/Post" }
+        "400":
+          description: Validation error or non-image upload
+        "401":
+          description: Not authenticated
+
+  /posts/searchByContent:
+    get:
+      summary: Search posts by content
+      tags: [Posts]
+      parameters:
+        - in: query
+          name: content
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Matching posts
+        "400":
+          description: Missing query or no matches
+
+  /posts/{id}:
+    get:
+      summary: Get a single post
+      tags: [Posts]
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Post found
+        "404":
+          description: Post not found
+    patch:
+      summary: Update a post's content
+      tags: [Posts]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Post updated
+        "403":
+          description: Not the author
+        "404":
+          description: Post not found
+    delete:
+      summary: Delete a post (cascades to comments)
+      tags: [Posts]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Post deleted
+        "403":
+          description: Not the author
+        "404":
+          description: Post not found
+
+  /posts/{id}/like:
+    patch:
+      summary: Toggle a like on a post
+      tags: [Posts]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Like toggled
+        "404":
+          description: Post not found
+
+  /posts/{postId}/comments:
+    get:
+      summary: Get comments for a post
+      tags: [Comments]
+      security: []
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of comments
+    post:
+      summary: Create a comment or reply on a post
+      tags: [Comments]
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 300 }
+                parentComment:
+                  type: string
+                  nullable: true
+      responses:
+        "201":
+          description: Comment created
+        "400":
+          description: Validation error, nested reply, or cross-post parent
+        "404":
+          description: Post or parent comment not found
+
+  /posts/{postId}/comments/{id}:
+    get:
+      summary: Get a single comment
+      tags: [Comments]
+      security: []
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Comment found
+        "404":
+          description: Comment not found
+    delete:
+      summary: Delete a comment (cascades to replies)
+      tags: [Comments]
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Comment deleted
+        "403":
+          description: Not the author
+        "404":
+          description: Comment not found
+
+  /notifications:
+    get:
+      summary: Get current user's notifications
+      tags: [Notifications]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of notifications
+        "401":
+          description: Not authenticated
+
+  /notifications/{id}:
+    patch:
+      summary: Mark a notification as read
+      tags: [Notifications]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Marked as read
+        "401":
+          description: Not authenticated
