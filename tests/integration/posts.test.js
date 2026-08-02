@@ -66,6 +66,17 @@ describe("POST /api/v1/posts", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects creating post with only image", async () => {
+    const { cookie } = await registerAndLogin();
+
+    const res = await request(app)
+      .post("/api/v1/posts")
+      .set("Cookie", cookie)
+      .attach("images", Buffer.from("fake-image"), test.jpg);
+
+    expect(res.status).toBe(400);
+  });
+
   it("rejects content over 500 characters", async () => {
     const { cookie } = await registerAndLogin();
 
@@ -166,6 +177,16 @@ describe("GET /api/v1/posts/searchByContent", () => {
 
     const res = await request(app)
       .get("/api/v1/posts/searchByContent")
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a whitespace content query param", async () => {
+    const { cookie } = await registerAndLogin();
+
+    const res = await request(app)
+      .get("/api/v1/posts/searchByContent?content=   ")
       .set("Cookie", cookie);
 
     expect(res.status).toBe(400);
