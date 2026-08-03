@@ -13,6 +13,7 @@ const commentRouter = require("./Routes/commentRoutes");
 const notificationRouter = require("./Routes/NotificationRoutes");
 const globalErrorHandler = require("./controller/errorController");
 const swaggerConfig = require("./swaggerConfig");
+const compression = require("compression");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -26,6 +27,8 @@ app.use(limiter);
 app.use(helmet());
 app.use(hpp());
 app.use(cors());
+
+app.use(compression());
 
 if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
