@@ -14,6 +14,7 @@ const userRouter = require("./Routes/userRoutes");
 const commentRouter = require("./Routes/commentRoutes");
 const notificationRouter = require("./Routes/NotificationRoutes");
 const globalErrorHandler = require("./controller/errorController");
+const swaggerConfig = require("./swaggerConfig");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -32,6 +33,7 @@ app.use(cors());
 
 if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
+swaggerConfig(app);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
 app.use("/api/v1/comments", commentRouter);

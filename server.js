@@ -1,6 +1,5 @@
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const swaggerConfig = require("./swaggerConfig");
 
 // .env files loaded
 dotenv.config({ path: "./.env", quiet: true });
@@ -24,8 +23,6 @@ const DB = process.env.DATABASE.replace(
 mongoose
   .connect(DB)
   .then(() => console.log("Database connected successfully!"));
-
-swaggerConfig(app);
 
 // starts listening to the port
 const port = process.env.PORT;

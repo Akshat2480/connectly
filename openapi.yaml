@@ -5,7 +5,8 @@ info:
   description: API documentation for the Connectly social media platform
 
 servers:
-  - url: http://localhost:3000/api/v1
+  - url: /api/v1
+    description: Relative path (works in any environment)
 
 components:
   securitySchemes:
