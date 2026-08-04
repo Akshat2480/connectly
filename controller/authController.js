@@ -50,7 +50,6 @@ const authController = {
     // 3) Send email to the user
     const html = welcomeTemplate(newUser.name);
     await sendEmail({
-      to: newUser.email,
       subject: "Welcome to Connectly!",
       html,
       text: convert(html),
@@ -159,7 +158,6 @@ const authController = {
     try {
       const html = resetPasswordTemplate(user.name, resetUrl, resetToken);
       await sendEmail({
-        to: email,
         subject: "Your password reset link (Valid for 10min)",
         html,
         text: convert(html),
