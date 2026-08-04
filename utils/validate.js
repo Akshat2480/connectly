@@ -5,7 +5,7 @@ const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();
 
-  console.log(errors);
+  logger.debug("Validation failed", { errors: errors.array() });
   const structuredErrors = errors.array().map((error) => ({
     field: error.path,
     message: error.msg,

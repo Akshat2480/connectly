@@ -5,15 +5,16 @@ const { rateLimit } = require("express-rate-limit");
 const helmet = require("helmet");
 const hpp = require("hpp");
 const cors = require("cors");
+const compression = require("compression");
 const app = express();
 
+const swaggerConfig = require("./swaggerConfig");
+const logger = require("./utils/logger");
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
 const commentRouter = require("./Routes/commentRoutes");
 const notificationRouter = require("./Routes/NotificationRoutes");
 const globalErrorHandler = require("./controller/errorController");
-const swaggerConfig = require("./swaggerConfig");
-const compression = require("compression");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -30,7 +31,9 @@ app.use(cors());
 
 app.use(compression());
 
-if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
+const morganStream = { write: (message) => logger.http(message.trim()) };
+if (process.env.NODE_ENV === "development")
+  app.use(morgan("dev", { stream: morganStream }));
 
 swaggerConfig(app);
 app.use("/api/v1/users", userRouter);

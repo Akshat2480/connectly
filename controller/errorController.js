@@ -1,4 +1,5 @@
 const AppError = require("../utils/AppError");
+const logger = require("../utils/logger");
 
 const sendErrorDev = (err, req, res) => {
   const response = {
@@ -9,7 +10,7 @@ const sendErrorDev = (err, req, res) => {
   if (err.errors) response.errors = err.errors;
 
   res.status(err.statusCode).json(response);
-  console.log(err);
+  logger.debug(err.message, { stack: err.stack });
 };
 
 const sendErrorProd = (err, req, res) => {
@@ -23,7 +24,7 @@ const sendErrorProd = (err, req, res) => {
   }
 
   // Programming or unknown error: don't leak details
-  console.error("ERROR 💥", err);
+  logger.error("Unhandled error", { message: err.message, stack: err.stack });
   return res.status(500).json({
     status: "error",
     message: "Something went very wrong...",

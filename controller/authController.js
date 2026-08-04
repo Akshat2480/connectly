@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { convert } = require("html-to-text");
 const crypto = require("crypto");
+const { promisify } = require("util");
 
 const User = require("../models/userModel");
 const AsyncCatch = require("../utils/AsyncCatch");
@@ -8,7 +9,7 @@ const AppError = require("../utils/AppError");
 const { sendEmail } = require("../utils/email");
 const welcomeTemplate = require("../utils/templates/welcomeTemplate");
 const resetPasswordTemplate = require("../utils/templates/resetPasswordTemplate");
-const { promisify } = require("util");
+const logger = require("../utils/logger");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -48,15 +49,18 @@ const authController = {
 
     // 3) Send email to the user
     const html = welcomeTemplate(newUser.name);
-    // await sendEmail({
-    //   to: newUser.email,
-    //   subject: "Welcome to Connectly!",
-    //   html,
-    //   text: convert(html),
-    // }).catch((err) => {
-    //   console.log(err);
-    //   console.error("Unable to send email");
-    // });
+    await sendEmail({
+      to: newUser.email,
+      subject: "Welcome to Connectly!",
+      html,
+      text: convert(html),
+    }).catch((err) => {
+      logger.warn("Failed to send welcome email", {
+        userId: newUser._id,
+        email: newUser.email,
+        message: err.message,
+      });
+    });
   }),
 
   login: AsyncCatch(async (req, res, next) => {

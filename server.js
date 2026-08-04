@@ -1,5 +1,6 @@
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const logger = require("./utils/logger");
 
 // .env files loaded
 dotenv.config({ path: "./.env", quiet: true });
@@ -11,7 +12,10 @@ const app = require("./app");
 
 // Uncaught Expeption
 process.on("uncaughtException", (err) => {
-  console.log("ERROR UNCAUGHT EXCEPTION", err);
+  logger.error("UNCAUGHT EXCEPTION - shutting down...", {
+    message: err.message,
+    stack: err.stack,
+  });
   process.exit(1);
 });
 
@@ -22,17 +26,20 @@ const DB = process.env.DATABASE.replace(
 );
 mongoose
   .connect(DB)
-  .then(() => console.log("Database connected successfully!"));
+  .then(() => logger.info("Database connected successfully!"));
 
 // starts listening to the port
 const port = process.env.PORT;
 const server = app.listen(port, "0.0.0.0", () => {
-  console.log(`The server is listening on port ${port}`);
+  logger.info(`The server is listening on port ${port}`);
 });
 
 // Unhandled Rejection
 process.on("unhandledRejection", (err) => {
-  console.log("ERROR UNHANDLED REJECTION", err);
+  logger.error("UNHANDLED REJECTION - shutting down...", {
+    message: err.message,
+    stack: err.stack,
+  });
   server.close(() => {
     process.exit(1);
   });

@@ -11,6 +11,7 @@ const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const AsyncCatch = require("../utils/AsyncCatch");
 const APIFeatures = require("../utils/apiFeatures");
 const sendNotification = require("../utils/sendNotification");
+const logger = require("../utils/logger");
 
 const filterObject = (obj, allowedField) => {
   const newObj = {};
@@ -65,7 +66,11 @@ const userController = {
     if (currentUser?.photoPublicId)
       await cloudinary.uploader
         .destroy(currentUser.photoPublicId)
-        .catch((err) => console.log("Failed to delete old profile image"));
+        .catch((err) =>
+          logger.warn("Failed to delete old profile image", {
+            message: err.message,
+          }),
+        );
 
     res.status(200).json({
       status: "success",
