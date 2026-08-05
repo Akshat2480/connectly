@@ -11,12 +11,13 @@ const {
   searchPostValidator,
 } = require("../validators/postValidator");
 const validate = require("../utils/validate");
+const cacheMiddleware = require("../utils/cache");
 
 const router = express.Router({ mergeParams: true });
 
 router
   .route("/")
-  .get(postController.getPosts)
+  .get(cacheMiddleware("posts"), postController.getPosts)
   .post(
     authController.protect,
     postController.uploadPostImages,
@@ -32,6 +33,7 @@ router.get(
   authController.protect,
   searchPostValidator,
   validate,
+  cacheMiddleware("posts"),
   postController.searchPostByContent,
 );
 
@@ -47,7 +49,12 @@ router.patch(
 
 router
   .route("/:id")
-  .get(getPostValidator, validate, postController.getPost)
+  .get(
+    getPostValidator,
+    validate,
+    cacheMiddleware("posts:id"),
+    postController.getPost,
+  )
   .patch(
     authController.protect,
     updatePostValidator,
