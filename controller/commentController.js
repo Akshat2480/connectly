@@ -59,6 +59,8 @@ const commentController = {
         comment,
       },
     });
+
+    await invalidatePrefix("comments");
   }),
 };
 
