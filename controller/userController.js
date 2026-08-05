@@ -12,6 +12,7 @@ const AsyncCatch = require("../utils/AsyncCatch");
 const APIFeatures = require("../utils/apiFeatures");
 const sendNotification = require("../utils/sendNotification");
 const logger = require("../utils/logger");
+const { invalidatePrefix } = require("../utils/cache");
 
 const filterObject = (obj, allowedField) => {
   const newObj = {};
@@ -78,6 +79,8 @@ const userController = {
         user: updatedUser,
       },
     });
+
+    await invalidatePrefix("users");
   }),
 
   deleteMe: asyncCatch(async (req, res, next) => {
@@ -91,6 +94,8 @@ const userController = {
     await user.save({ validateBeforeSave: false });
 
     res.status(204).send();
+
+    await invalidatePrefix("users");
   }),
 
   getUser: asyncCatch(async (req, res, next) => {
@@ -152,6 +157,8 @@ const userController = {
       status: "success",
       following: !isFollowing,
     });
+
+    await invalidatePrefix("users");
   }),
 
   uploadUserPhoto: upload.single("photo"),

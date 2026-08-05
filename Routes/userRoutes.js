@@ -17,6 +17,7 @@ const {
   deleteMeValidator,
 } = require("../validators/userValidator");
 const validate = require("../utils/validate");
+const { cacheMiddleware } = require("../utils/cache");
 
 const router = express.Router();
 
@@ -40,6 +41,7 @@ router.get(
   "/me",
   authController.protect,
   userController.getMe,
+  cacheMiddleware("users:me"),
   userController.getUser,
 );
 router.patch(
@@ -63,10 +65,16 @@ router.get(
   authController.protect,
   searchUserValidator,
   validate,
+  cacheMiddleware("users:name"),
   userController.searchUsersByName,
 );
 
-router.get("/feed", authController.protect, userController.getFeed);
+router.get(
+  "/feed",
+  authController.protect,
+  cacheMiddleware("users:feed"),
+  userController.getFeed,
+);
 
 router.patch(
   "/:id/follow",
@@ -75,7 +83,13 @@ router.patch(
   validate,
   userController.followUser,
 );
-router.get("/:id", getUserValidator, validate, userController.getUser);
+router.get(
+  "/:id",
+  getUserValidator,
+  validate,
+  cacheMiddleware("users:id"),
+  userController.getUser,
+);
 
 router.use("/:userId/posts", postRouter);
 

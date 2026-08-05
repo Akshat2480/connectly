@@ -10,6 +10,7 @@ const { sendEmail } = require("../utils/email");
 const welcomeTemplate = require("../utils/templates/welcomeTemplate");
 const resetPasswordTemplate = require("../utils/templates/resetPasswordTemplate");
 const logger = require("../utils/logger");
+const { invalidatePrefix } = require("../utils/cache");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -60,6 +61,8 @@ const authController = {
         message: err.message,
       });
     });
+
+    await invalidatePrefix("users");
   }),
 
   login: AsyncCatch(async (req, res, next) => {
@@ -208,6 +211,8 @@ const authController = {
 
     sendCookieWithToken(user, res);
     res.status(200).json({ message: "Logged in successful" });
+
+    await invalidatePrefix("users");
   }),
 };
 
