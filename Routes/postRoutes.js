@@ -11,7 +11,7 @@ const {
   searchPostValidator,
 } = require("../validators/postValidator");
 const validate = require("../utils/validate");
-const cacheMiddleware = require("../utils/cache");
+const { cacheMiddleware, invalidateOnFinish } = require("../utils/cache");
 
 const router = express.Router({ mergeParams: true });
 
@@ -25,6 +25,7 @@ router
     postController.uploadPostsToCloudinary,
     createPostValidator,
     validate,
+    invalidateOnFinish("posts"),
     postController.createPost,
   );
 
@@ -44,6 +45,7 @@ router.patch(
   authController.protect,
   likePostValidator,
   validate,
+  invalidateOnFinish("posts"),
   postController.likePost,
 );
 
@@ -59,12 +61,14 @@ router
     authController.protect,
     updatePostValidator,
     validate,
+    invalidateOnFinish("posts"),
     postController.updatePost,
   )
   .delete(
     authController.protect,
     deletePostValidator,
     validate,
+    invalidateOnFinish("posts"),
     postController.deletePost,
   );
 
