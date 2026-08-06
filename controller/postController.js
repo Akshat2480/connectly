@@ -48,7 +48,7 @@ const postController = {
       like: !hasLiked,
     });
 
-    await invalidatePrefix(`post:${req.params.id}`);
+    await invalidatePrefix(["posts", `post:${req.params.id}`]);
   }),
 
   uploadPostImages: upload.array("images", 5),

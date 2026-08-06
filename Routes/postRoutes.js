@@ -25,7 +25,7 @@ router
     postController.uploadPostsToCloudinary,
     createPostValidator,
     validate,
-    invalidateOnFinish("posts"),
+    invalidateOnFinish(["posts"]),
     postController.createPost,
   );
 
@@ -60,7 +60,7 @@ router
     authController.protect,
     updatePostValidator,
     validate,
-    invalidateOnFinish((req) => `post:${req.params.id}`),
+    invalidateOnFinish(["posts", (req) => `post:${req.params.id}`]),
     invalidateOnFinish("posts"),
     postController.updatePost,
   )
@@ -68,8 +68,7 @@ router
     authController.protect,
     deletePostValidator,
     validate,
-    invalidateOnFinish((req) => `post:${req.params.id}`),
-    invalidateOnFinish("posts"),
+    invalidateOnFinish(["posts", (req) => `post:${req.params.id}`]),
     postController.deletePost,
   );
 

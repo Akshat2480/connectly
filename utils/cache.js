@@ -28,18 +28,33 @@ const cacheMiddleware = (keyBuilder, ttlSeconds = 60) => {
   };
 };
 
-const invalidatePrefix = async (keyBuilder) => {
-  const keys = await redisClient.keys(keyBuilder);
-  if (keys.length) await redisClient.del(...keys);
+const invalidatePrefix = async (prefixes) => {
+  const prefixList = Array.isArray(prefixes) ? prefixes : [prefixes];
+
+  await Promise.all(
+    prefixList.map(async (prefix) => {
+      const keys = await redisClient.keys(`${prefix}*`);
+      if (keys.length) await redisClient.del(...keys);
+    }),
+  );
 };
 
-const invalidateOnFinish = (keyBuilder) => {
+const invalidateOnFinish = (prefixes) => {
   return (req, res, next) => {
     res.on("finish", async () => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        let prefix =
-          typeof keyBuilder === "function" ? keyBuilder(req) : keyBuilder;
-        invalidatePrefix(prefix);
+        const prefixList = Array.isArray(prefixes) ? prefixes : [prefix];
+        console.log(prefixList);
+
+        await Promise.all(
+          prefixList.map(async (rawPrefix) => {
+            console.log(rawPrefix);
+            let prefix =
+              typeof rawPrefix === "function" ? rawPrefix(req) : rawPrefix;
+            const keys = await redisClient.keys(`${prefix}*`);
+            if (keys.length) await redisClient.del(...keys);
+          }),
+        );
       }
     });
     next();
