@@ -1,9 +1,10 @@
 const redisClient = require("./redisClient");
 const logger = require("./logger");
 
-const cacheMiddleware = (prefix, ttlSeconds = 60) => {
+const cacheMiddleware = (keyBuilder, ttlSeconds = 60) => {
   return async (req, res, next) => {
-    const key = `${prefix}:${req.originalUrl}`;
+    // const key = `${prefix}:${req.originalUrl}`;
+    const key = typeof keyBuilder === "function" ? keyBuilder(req) : keyBuilder;
 
     try {
       const cached = await redisClient.get(key);
@@ -27,18 +28,18 @@ const cacheMiddleware = (prefix, ttlSeconds = 60) => {
   };
 };
 
-const invalidatePrefix = async (prefix) => {
-  const keys = await redisClient.keys(`${prefix}:*`);
+const invalidatePrefix = async (keyBuilder) => {
+  const keys = await redisClient.keys(keyBuilder);
   if (keys.length) await redisClient.del(...keys);
 };
 
-const invalidateOnFinish = (prefix) => {
+const invalidateOnFinish = (keyBuilder) => {
   return (req, res, next) => {
-    res.on("finish", () => {
+    res.on("finish", async () => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        invalidatePrefix(prefix).catch((err) =>
-          logger.error(`There was a problem invalidating cache for ${prefix}`),
-        );
+        let prefix =
+          typeof keyBuilder === "function" ? keyBuilder(req) : keyBuilder;
+        invalidatePrefix(prefix);
       }
     });
     next();

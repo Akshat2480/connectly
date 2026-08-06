@@ -9,6 +9,8 @@ const AppError = require("../utils/AppError");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const sendNotification = require("../utils/sendNotification");
 
+const { invalidatePrefix } = require("../utils/cache");
+
 const postController = {
   getPosts: factory.getAll(Post),
   getPost: factory.getOne(Post),
@@ -45,6 +47,8 @@ const postController = {
       status: "success",
       like: !hasLiked,
     });
+
+    await invalidatePrefix(`post:${req.params.id}`);
   }),
 
   uploadPostImages: upload.array("images", 5),

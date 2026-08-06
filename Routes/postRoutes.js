@@ -34,7 +34,7 @@ router.get(
   authController.protect,
   searchPostValidator,
   validate,
-  cacheMiddleware("posts"),
+  cacheMiddleware((req) => `posts:content:${req.query.content}`),
   postController.searchPostByContent,
 );
 
@@ -45,7 +45,6 @@ router.patch(
   authController.protect,
   likePostValidator,
   validate,
-  invalidateOnFinish("posts"),
   postController.likePost,
 );
 
@@ -54,13 +53,14 @@ router
   .get(
     getPostValidator,
     validate,
-    cacheMiddleware("posts:id"),
+    cacheMiddleware((req) => `post:${req.params.id}`),
     postController.getPost,
   )
   .patch(
     authController.protect,
     updatePostValidator,
     validate,
+    invalidateOnFinish((req) => `post:${req.params.id}`),
     invalidateOnFinish("posts"),
     postController.updatePost,
   )
@@ -68,6 +68,7 @@ router
     authController.protect,
     deletePostValidator,
     validate,
+    invalidateOnFinish((req) => `post:${req.params.id}`),
     invalidateOnFinish("posts"),
     postController.deletePost,
   );
