@@ -158,11 +158,11 @@ const userController = {
       following: !isFollowing,
     });
 
-    await invalidatePrefix(
+    await invalidatePrefix([
       "users",
       `user:${req.params.id}`,
       `user:${req.user.id}`,
-    );
+    ]);
   }),
 
   uploadUserPhoto: upload.single("photo"),
