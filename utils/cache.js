@@ -39,22 +39,13 @@ const invalidatePrefix = async (prefixes) => {
   );
 };
 
-const invalidateOnFinish = (prefixes) => {
+const invalidateOnFinish = (rawPrefixes) => {
   return (req, res, next) => {
     res.on("finish", async () => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        const prefixList = Array.isArray(prefixes) ? prefixes : [prefix];
-        console.log(prefixList);
-
-        await Promise.all(
-          prefixList.map(async (rawPrefix) => {
-            console.log(rawPrefix);
-            let prefix =
-              typeof rawPrefix === "function" ? rawPrefix(req) : rawPrefix;
-            const keys = await redisClient.keys(`${prefix}*`);
-            if (keys.length) await redisClient.del(...keys);
-          }),
-        );
+        const prefixes =
+          typeof rawPrefixes === "function" ? rawPrefixes(req) : rawPrefixes;
+        invalidatePrefix(prefixes);
       }
     });
     next();

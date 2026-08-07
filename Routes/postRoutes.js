@@ -60,15 +60,14 @@ router
     authController.protect,
     updatePostValidator,
     validate,
-    invalidateOnFinish(["posts", (req) => `post:${req.params.id}`]),
-    invalidateOnFinish("posts"),
+    invalidateOnFinish((req) => ["posts", `post:${req.params.id}`]),
     postController.updatePost,
   )
   .delete(
     authController.protect,
     deletePostValidator,
     validate,
-    invalidateOnFinish(["posts", (req) => `post:${req.params.id}`]),
+    invalidateOnFinish((req) => ["posts", `post:${req.params.id}`]),
     postController.deletePost,
   );
 
