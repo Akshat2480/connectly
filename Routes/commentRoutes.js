@@ -1,7 +1,6 @@
 const express = require("express");
 const commentController = require("../controller/commentController");
 const authController = require("../controller/authController");
-const { cacheMiddleware, invalidateOnFinish } = require("../utils/cache");
 
 const {
   createCommentValidator,
@@ -9,10 +8,15 @@ const {
   deleteCommentValidator,
 } = require("../validators/commentValidator");
 const validate = require("../utils/validate");
+const { cacheMiddleware } = require("../utils/cache");
 
 const router = express.Router({ mergeParams: true });
 
-router.get("/", cacheMiddleware("comments"), commentController.getComments);
+router.get(
+  "/",
+  cacheMiddleware((req) => `comments:post:${req.params.postId}`),
+  commentController.getComments,
+);
 router.post(
   "/",
   authController.protect,
@@ -26,14 +30,13 @@ router
   .get(
     getCommentValidator,
     validate,
-    cacheMiddleware("comments:id"),
+    cacheMiddleware((req) => `comment:${req.params.id}`),
     commentController.getComment,
   )
   .delete(
     authController.protect,
     deleteCommentValidator,
     validate,
-    invalidateOnFinish("comments"),
     commentController.deleteComment,
   );
 

@@ -4,11 +4,11 @@ const Comment = require("../models/commentModel");
 const AsyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 const sendNotification = require("../utils/sendNotification");
+const { invalidatePrefix } = require("../utils/cache");
 
 const commentController = {
   getComments: factory.getAll(Comment),
   getComment: factory.getOne(Comment),
-  deleteComment: factory.deleteOne(Comment),
 
   createComment: AsyncCatch(async (req, res, next) => {
     const postId = req.params.postId;
@@ -60,7 +60,29 @@ const commentController = {
       },
     });
 
-    await invalidatePrefix("comments");
+    await invalidatePrefix([
+      "posts",
+      `post:${req.params.postId}`,
+      `comments:post:${req.params.postId}`,
+    ]);
+  }),
+
+  deleteComment: AsyncCatch(async (req, res, next) => {
+    const comment = await Comment.findById(req.params.id);
+
+    if (!comment)
+      return next(new AppError("No document found with the given id", 404));
+
+    await Comment.findByIdAndDelete(req.params.id);
+
+    res.status(204).send();
+
+    await invalidatePrefix([
+      "posts",
+      `post:${comment.post}`,
+      `comment:${req.params.id}`,
+      `comments:post:${comment.post}`,
+    ]);
   }),
 };
 
