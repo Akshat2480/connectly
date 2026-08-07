@@ -41,7 +41,7 @@ router.get(
   "/me",
   authController.protect,
   userController.getMe,
-  cacheMiddleware("users:me"),
+  cacheMiddleware((req) => `user:${req.user.id}`),
   userController.getUser,
 );
 router.patch(
@@ -65,14 +65,14 @@ router.get(
   authController.protect,
   searchUserValidator,
   validate,
-  cacheMiddleware("users:name"),
+  cacheMiddleware((req) => `users:name:${req.query.name}`),
   userController.searchUsersByName,
 );
 
 router.get(
   "/feed",
   authController.protect,
-  cacheMiddleware("users:feed"),
+  cacheMiddleware((req) => `user:${req.user.id}:feed`),
   userController.getFeed,
 );
 
@@ -87,7 +87,7 @@ router.get(
   "/:id",
   getUserValidator,
   validate,
-  cacheMiddleware("users:id"),
+  cacheMiddleware((req) => `user:${req.params.id}`),
   userController.getUser,
 );
 

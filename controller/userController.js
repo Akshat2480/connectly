@@ -80,7 +80,7 @@ const userController = {
       },
     });
 
-    await invalidatePrefix("users");
+    await invalidatePrefix(["users", `user:${req.user.id}`]);
   }),
 
   deleteMe: asyncCatch(async (req, res, next) => {
@@ -95,7 +95,7 @@ const userController = {
 
     res.status(204).send();
 
-    await invalidatePrefix("users");
+    await invalidatePrefix(["users", `user:${req.user.id}`]);
   }),
 
   getUser: asyncCatch(async (req, res, next) => {
@@ -158,7 +158,11 @@ const userController = {
       following: !isFollowing,
     });
 
-    await invalidatePrefix("users");
+    await invalidatePrefix(
+      "users",
+      `user:${req.params.id}`,
+      `user:${req.user.id}`,
+    );
   }),
 
   uploadUserPhoto: upload.single("photo"),

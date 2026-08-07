@@ -2,15 +2,15 @@ const jwt = require("jsonwebtoken");
 const { convert } = require("html-to-text");
 const crypto = require("crypto");
 const { promisify } = require("util");
-
 const User = require("../models/userModel");
+
 const AsyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
-const { sendEmail } = require("../utils/email");
 const welcomeTemplate = require("../utils/templates/welcomeTemplate");
 const resetPasswordTemplate = require("../utils/templates/resetPasswordTemplate");
 const logger = require("../utils/logger");
 const { invalidatePrefix } = require("../utils/cache");
+const { sendEmail } = require("../utils/email");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -165,6 +165,7 @@ const authController = {
         html,
         text: convert(html),
       });
+      await invalidatePrefix(["users", `user:${req.user.id}`]);
     } catch (err) {
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
@@ -212,7 +213,7 @@ const authController = {
     sendCookieWithToken(user, res);
     res.status(200).json({ message: "Logged in successful" });
 
-    await invalidatePrefix("users");
+    await invalidatePrefix(["users", `user:${req.user.id}`]);
   }),
 };
 
