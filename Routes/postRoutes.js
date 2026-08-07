@@ -17,7 +17,12 @@ const router = express.Router({ mergeParams: true });
 
 router
   .route("/")
-  .get(cacheMiddleware("posts"), postController.getPosts)
+  .get(
+    cacheMiddleware((req) =>
+      req.params.userId ? `posts:user:${req.params.userId}` : "posts",
+    ),
+    postController.getPosts,
+  )
   .post(
     authController.protect,
     postController.uploadPostImages,
