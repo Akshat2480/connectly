@@ -6,9 +6,10 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 const cors = require("cors");
 const compression = require("compression");
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
 const app = express();
 
-const swaggerConfig = require("./swaggerConfig");
 const logger = require("./utils/logger");
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
@@ -23,6 +24,7 @@ const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   limit: 100,
 });
+app.set("trust proxy", 1);
 app.use(limiter);
 app.use(helmet());
 app.use(hpp());
@@ -34,10 +36,11 @@ const morganStream = { write: (message) => logger.http(message.trim()) };
 if (process.env.NODE_ENV === "development")
   app.use(morgan("dev", { stream: morganStream }));
 
-swaggerConfig(app);
+const swaggerDocument = YAML.load("./docs/openapi.yaml");
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
 app.use("/api/v1/comments", commentRouter);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(globalErrorHandler);
 
