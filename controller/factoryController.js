@@ -3,7 +3,6 @@ const Post = require("../models/postModel");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 const ApiFeature = require("../utils/apiFeatures");
-const sendNotification = require("../utils/sendNotification");
 
 const factory = {
   getAll: (Model) =>

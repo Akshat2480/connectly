@@ -7,8 +7,6 @@ const upload = require("../utils/upload");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
-const sendNotification = require("../utils/sendNotification");
-
 const { invalidatePrefix } = require("../utils/cache");
 
 const postController = {
@@ -34,13 +32,6 @@ const postController = {
         { _id: req.params.id },
         { $addToSet: { likes: req.user.id } },
       );
-
-      await sendNotification({
-        recipient: post.author,
-        sender: req.user.id,
-        type: "like",
-        post: post._id,
-      });
     }
 
     res.status(200).json({

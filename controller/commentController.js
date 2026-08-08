@@ -3,7 +3,6 @@ const Post = require("../models/postModel");
 const Comment = require("../models/commentModel");
 const AsyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
-const sendNotification = require("../utils/sendNotification");
 const { invalidatePrefix } = require("../utils/cache");
 
 const commentController = {
@@ -36,22 +35,6 @@ const commentController = {
       author: req.user.id,
       parentComment: parentComment?.id || null,
     });
-
-    if (parentComment !== null) {
-      await sendNotification({
-        recipient: parentComment.author,
-        sender: req.user.id,
-        type: "reply",
-        post: postId,
-      });
-    } else {
-      await sendNotification({
-        recipient: post.author,
-        sender: req.user.id,
-        type: "comment",
-        post: postId,
-      });
-    }
 
     res.status(201).json({
       status: "success",

@@ -13,7 +13,6 @@ const logger = require("./utils/logger");
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
 const commentRouter = require("./Routes/commentRoutes");
-const notificationRouter = require("./Routes/NotificationRoutes");
 const globalErrorHandler = require("./controller/errorController");
 
 app.use(express.json());
@@ -39,7 +38,6 @@ swaggerConfig(app);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
 app.use("/api/v1/comments", commentRouter);
-app.use("/api/v1/notifications", notificationRouter);
 
 app.use(globalErrorHandler);
 

@@ -10,7 +10,6 @@ const cloudinary = require("../utils/cloudinary");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const AsyncCatch = require("../utils/AsyncCatch");
 const APIFeatures = require("../utils/apiFeatures");
-const sendNotification = require("../utils/sendNotification");
 const logger = require("../utils/logger");
 const { invalidatePrefix } = require("../utils/cache");
 
@@ -145,12 +144,6 @@ const userController = {
         { _id: currUser.id },
         { $addToSet: { following: req.params.id } },
       );
-
-      await sendNotification({
-        recipient: req.params.id,
-        sender: req.user.id,
-        type: "follow",
-      });
     }
 
     res.status(200).json({

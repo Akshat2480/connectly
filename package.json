@@ -4,9 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js",
-    "prod": "cross-env NODE_ENV=production node server.js",
-    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles",
-    "test:watch": "cross-env NODE_ENV=test jest --watch"
+    "prod": "cross-env NODE_ENV=production node server.js"
   },
   "keywords": [],
   "author": "Akshat Sharma",
@@ -42,9 +40,6 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0",
-    "jest": "^30.4.2",
-    "mongodb-memory-server": "^11.2.0",
-    "supertest": "^7.2.2"
+    "cross-env": "^10.1.0"
   }
 }
