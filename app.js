@@ -10,22 +10,28 @@ const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 const app = express();
 
-const logger = require("./utils/logger");
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
 const commentRouter = require("./Routes/commentRoutes");
 const globalErrorHandler = require("./controller/errorController");
 
+const logger = require("./utils/logger");
+const rateLimiting = require("./utils/rateLimiting");
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/public`));
 
-const limiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  limit: 100,
-});
-app.set("trust proxy", 1);
-app.use(limiter);
+// DISABLED CURRENTLY BECAUSE IMPLEMENTING THIS FEATURE WITH REDIS
+// const limiter = rateLimit({
+//   windowMs: 10 * 60 * 1000,
+//   limit: 100,
+// });
+// app.set("trust proxy", 1);
+// app.use(limiter);
+
+app.use(rateLimiting());
+
 app.use(helmet());
 app.use(hpp());
 app.use(cors());
