@@ -11,25 +11,27 @@ const rateLimiting = ({
     const identifier = req.user?.id || req.ip;
     const key = `rl:${prefix}:${identifier}`;
 
-    const count = await redisClient.incr(key);
+    const now = Date.now();
+    const windowStart = Date.now() - windowSeconds * 1000;
 
-    logger.info(count);
+    await redisClient.zremrangebyscore(key, 0, windowStart);
 
-    if (count === 1) {
-      await redisClient.expire(key, windowSeconds);
+    const count = await redisClient.zcard(key);
+
+    if (count >= max) {
+      const ttl = await redisClient.ttl(key);
+      res.set("Retry-After", String(ttl));
+      return res.status(429).json({
+        message: "Too many requests! Please try again later",
+      });
     }
 
-    const ttl = await redisClient.ttl(key);
-    if (count <= max) {
-      res.set("X-RateLimit-Limit", String(max));
-      res.set("X-RateLimit-Remaining", String(max - count));
-      return next();
-    }
+    await redisClient.zadd(key, Date.now(), crypto.randomUUID());
+    await redisClient.expire(key, windowSeconds);
 
-    res.set("Retry-After", String(ttl));
-    return res.status(429).json({
-      message: "Too many requests! Please try again later",
-    });
+    res.set("X-RateLimit-Limit", String(max));
+    res.set("X-RateLimit-Remaining", String(max - count));
+    return next();
   });
 
 module.exports = rateLimiting;

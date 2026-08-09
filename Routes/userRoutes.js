@@ -48,8 +48,8 @@ router.post("/logout", authController.protect, authController.logout);
 router.post(
   "/forgotPassword",
   rateLimiting({
-    windowSeconds: 900,
-    max: 5,
+    windowSeconds: 600,
+    max: 10,
     prefix: "auth",
   }),
   forgotPasswordValidator,
@@ -59,8 +59,8 @@ router.post(
 router.post(
   "/resetPassword/:resetToken",
   rateLimiting({
-    windowSeconds: 900,
-    max: 5,
+    windowSeconds: 600,
+    max: 10,
     prefix: "auth",
   }),
   resetPasswordValidator,

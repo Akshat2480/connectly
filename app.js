@@ -32,7 +32,7 @@ app.use(express.static(`${__dirname}/public`));
 
 app.use(
   rateLimiting({
-    windowSeconds: 600,
+    windowSeconds: 60,
     max: 100,
     prefix: "global",
   }),
