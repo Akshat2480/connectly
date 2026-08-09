@@ -10,7 +10,6 @@ const dotenv = require("dotenv");
 
 dotenv.config({ path: "./.env" });
 
-// Adjust these paths to wherever your Mongoose models actually live
 const User = require("../models/userModel");
 const Post = require("../models/postModel");
 const Comment = require("../models/commentModel");

@@ -5,13 +5,10 @@ class APIFeatures {
   }
 
   filter() {
-    // Filtering
-    // eslint-disable-next-line node/no-unsupported-features/es-syntax
     const queryObj = { ...this.queryString };
     const excludedFields = ["page", "sort", "limit", "fields"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    // Advanced filtering
     let queryString = JSON.stringify(queryObj);
     queryString = queryString.replace(
       /\b(gte|gt|lte|lt)\b/g,
@@ -23,7 +20,6 @@ class APIFeatures {
   }
 
   sort() {
-    // Sorting
     if (this.queryString.sort) {
       const sortBy = this.queryString.sort.split(",").join(" ");
       this.query = this.query.sort(sortBy);
@@ -32,7 +28,6 @@ class APIFeatures {
   }
 
   limitFields() {
-    // Field limiting (Projecting)
     if (this.queryString.fields) {
       const fields = this.queryString.fields.split(",").join(" ");
       this.query = this.query.select(fields);
@@ -41,7 +36,6 @@ class APIFeatures {
   }
 
   paginate() {
-    // Pagination
     const page = Number(this.queryString.page) || 1;
     const requestedLimit = Number(this.queryString.limit) || 100;
     const MAX_LIMIT = 100;

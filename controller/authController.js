@@ -140,7 +140,7 @@ const authController = {
       );
     }
 
-    // Grant access to protected route
+    // 5) Grant access to protected route
     next();
   }),
 
@@ -178,7 +178,7 @@ const authController = {
       );
     }
 
-    // Send response
+    // 5) Send response
     res.status(200).json({
       status: "success",
       message: "Password reset link has been sent to your email",

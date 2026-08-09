@@ -34,7 +34,6 @@ const commentSchema = new mongoose.Schema(
   },
 );
 
-// Index for fast lookup of all comments on a given post
 commentSchema.index({ post: 1 });
 commentSchema.index({ parentComment: 1 });
 

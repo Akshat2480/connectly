@@ -3,7 +3,6 @@ const logger = require("./logger");
 
 const cacheMiddleware = (keyBuilder, ttlSeconds = 60) => {
   return async (req, res, next) => {
-    // const key = `${prefix}:${req.originalUrl}`;
     const key = typeof keyBuilder === "function" ? keyBuilder(req) : keyBuilder;
 
     try {

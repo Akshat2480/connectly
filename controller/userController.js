@@ -133,13 +133,11 @@ const userController = {
     );
 
     if (isFollowing) {
-      // UNFOLLOW
       await User.updateOne(
         { _id: currUser.id },
         { $pull: { following: req.params.id } },
       );
     } else {
-      // FOLLOW
       await User.updateOne(
         { _id: currUser.id },
         { $addToSet: { following: req.params.id } },
