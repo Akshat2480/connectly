@@ -2,22 +2,34 @@ const AsyncCatch = require("./AsyncCatch");
 const redisClient = require("./redisClient");
 const logger = require("./logger");
 
-const rateLimiting = (ttlSeconds = 600) =>
+const rateLimiting = ({
+  windowSeconds = 10,
+  max = 10,
+  prefix = "global",
+} = {}) =>
   AsyncCatch(async (req, res, next) => {
-    if (await redisClient.get("count")) {
-      await redisClient.incr("count");
-    } else {
-      await redisClient.setex("count", ttlSeconds, 1);
+    const identifier = req.user?.id || req.ip;
+    const key = `rl:${prefix}:${identifier}`;
+
+    const count = await redisClient.incr(key);
+
+    logger.info(count);
+
+    if (count === 1) {
+      await redisClient.expire(key, windowSeconds);
     }
 
-    const count = await redisClient.get("count");
-    if (count <= 10) {
+    const ttl = await redisClient.ttl(key);
+    if (count <= max) {
+      res.set("X-RateLimit-Limit", String(max));
+      res.set("X-RateLimit-Remaining", String(max - count));
       return next();
-    } else {
-      return res.status(429).json({
-        message: "Too many requests",
-      });
     }
+
+    res.set("Retry-After", String(ttl));
+    return res.status(429).json({
+      message: "Too many requests! Please try again later",
+    });
   });
 
 module.exports = rateLimiting;

@@ -30,7 +30,13 @@ app.use(express.static(`${__dirname}/public`));
 // app.set("trust proxy", 1);
 // app.use(limiter);
 
-app.use(rateLimiting());
+app.use(
+  rateLimiting({
+    windowSeconds: 600,
+    max: 100,
+    prefix: "global",
+  }),
+);
 
 app.use(helmet());
 app.use(hpp());

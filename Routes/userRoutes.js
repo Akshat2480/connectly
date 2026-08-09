@@ -18,20 +18,51 @@ const {
 } = require("../validators/userValidator");
 const validate = require("../utils/validate");
 const { cacheMiddleware } = require("../utils/cache");
+const rateLimiting = require("../utils/rateLimiting");
 
 const router = express.Router();
 
-router.post("/register", registerValidator, validate, authController.register);
-router.post("/login", loginValidator, validate, authController.login);
+router.post(
+  "/register",
+  rateLimiting({
+    windowSeconds: 900,
+    max: 5,
+    prefix: "auth",
+  }),
+  registerValidator,
+  validate,
+  authController.register,
+);
+router.post(
+  "/login",
+  rateLimiting({
+    windowSeconds: 900,
+    max: 5,
+    prefix: "auth",
+  }),
+  loginValidator,
+  validate,
+  authController.login,
+);
 router.post("/logout", authController.protect, authController.logout);
 router.post(
   "/forgotPassword",
+  rateLimiting({
+    windowSeconds: 900,
+    max: 5,
+    prefix: "auth",
+  }),
   forgotPasswordValidator,
   validate,
   authController.forgotPassword,
 );
 router.post(
   "/resetPassword/:resetToken",
+  rateLimiting({
+    windowSeconds: 900,
+    max: 5,
+    prefix: "auth",
+  }),
   resetPasswordValidator,
   validate,
   authController.resetPassword,
