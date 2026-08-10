@@ -1,20 +1,52 @@
-const fs = require("fs");
-const sharp = require("sharp");
 const Post = require("../models/postModel");
 const factory = require("./factoryController");
 
 const upload = require("../utils/upload");
 const asyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
-const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const { invalidatePrefix } = require("../utils/cache");
+const { imageQueue } = require("../queues/imageQueue");
+
+const filterObject = (obj, allowedField) => {
+  const newObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedField.includes(el)) newObj[el] = obj[el];
+  });
+  return newObj;
+};
 
 const postController = {
   getPosts: factory.getAll(Post),
   getPost: factory.getOne(Post),
-  createPost: factory.createOne(Post, ["content", "images"]),
   updatePost: factory.updateOne(Post, ["content"]),
   deletePost: factory.deleteOne(Post),
+
+  uploadPostImages: upload.array("images", 5),
+
+  createPost: asyncCatch(async (req, res, next) => {
+    const filteredBody = filterObject(req.body, ["content"]);
+    filteredBody.author = req.user.id;
+
+    const post = await Post.create({
+      ...filteredBody,
+      imageStatus: "processing",
+      expectedImageCount: req.files.length,
+      processedImageCount: 0,
+    });
+
+    const jobs = req.files.map((file, index) => ({
+      name: "resize-and-upload",
+      data: {
+        postId: post._id.toString(),
+        index,
+        buffer: file.buffer.toString("base64"),
+      },
+    }));
+
+    await imageQueue.addBulk(jobs);
+
+    res.status(201).json({ post });
+  }),
 
   likePost: asyncCatch(async (req, res, next) => {
     const post = await Post.findById(req.params.id);
@@ -40,44 +72,6 @@ const postController = {
     });
 
     await invalidatePrefix(["posts", `post:${req.params.id}`]);
-  }),
-
-  uploadPostImages: upload.array("images", 5),
-
-  resizePostImages: asyncCatch(async (req, res, next) => {
-    if (!req.files || req.files.length === 0) return next();
-
-    await Promise.all(
-      req.files.map(async (file) => {
-        file.buffer = await sharp(file.buffer)
-          .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
-          .toFormat("jpeg")
-          .jpeg({ quality: 85 })
-          .toBuffer();
-      }),
-    );
-
-    next();
-  }),
-
-  uploadPostsToCloudinary: asyncCatch(async (req, res, next) => {
-    if (!req.files || req.files.length === 0) return next();
-
-    const uploadedImages = await Promise.all(
-      req.files.map(async (file) => {
-        const uploaded = await uploadToCloudinary(
-          file.buffer,
-          "connectly/posts",
-        );
-        return {
-          url: uploaded.secure_url,
-          publicId: uploaded.public_id,
-        };
-      }),
-    );
-
-    req.body.images = uploadedImages;
-    next();
   }),
 
   searchPostByContent: asyncCatch(async (req, res, next) => {

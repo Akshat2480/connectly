@@ -26,8 +26,6 @@ router
   .post(
     authController.protect,
     postController.uploadPostImages,
-    postController.resizePostImages,
-    postController.uploadPostsToCloudinary,
     createPostValidator,
     validate,
     invalidateOnFinish(["posts"]),

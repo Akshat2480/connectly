@@ -38,6 +38,13 @@ const postSchema = new mongoose.Schema(
       ],
       default: [],
     },
+    imageStatus: {
+      type: String,
+      enum: ["processing", "done", "failed"],
+      default: "processing",
+    },
+    expectedImageCount: { type: Number, default: 0 },
+    processedImageCount: { type: Number, default: 0 },
   },
   {
     toJSON: { virtuals: true },
@@ -73,7 +80,6 @@ postSchema.pre("findOneAndDelete", async function () {
     const Comment = require("./commentModel");
     await Comment.deleteMany({ post: post._id });
   }
-
 });
 
 const Post = mongoose.model("Post", postSchema);

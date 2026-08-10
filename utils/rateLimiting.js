@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const AsyncCatch = require("./AsyncCatch");
-const redisClient = require("./redisClient");
+const { redisClient } = require("../config/redisConnection");
 const logger = require("./logger");
 
 const rateLimiting = ({

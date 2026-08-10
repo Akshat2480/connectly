@@ -1,4 +1,4 @@
-const redisClient = require("./redisClient");
+const { redisClient } = require("../config/redisConnection");
 const logger = require("./logger");
 
 const cacheMiddleware = (keyBuilder, ttlSeconds = 60) => {
