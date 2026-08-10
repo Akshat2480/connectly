@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const AsyncCatch = require("./AsyncCatch");
 const redisClient = require("./redisClient");
 const logger = require("./logger");
@@ -12,13 +13,42 @@ const rateLimiting = ({
     const key = `rl:${prefix}:${identifier}`;
 
     const now = Date.now();
-    const windowStart = Date.now() - windowSeconds * 1000;
+    const requestId = crypto.randomUUID();
 
-    await redisClient.zremrangebyscore(key, 0, windowStart);
+    const [allowed, count] = await redisClient.eval(
+      `
+        local key = KEYS[1]
 
-    const count = await redisClient.zcard(key);
+        local now = tonumber(ARGV[1])
+        local windowMs = tonumber(ARGV[2])
+        local maxRequests = tonumber(ARGV[3])
+        local requestId = ARGV[4]
 
-    if (count >= max) {
+        local windowStart = now - windowMs
+
+        redis.call("ZREMRANGEBYSCORE", key, 0, windowStart)
+
+        local count = redis.call("ZCARD", key)
+
+        if count >= maxRequests then 
+          return {0, count}
+        end
+        
+        redis.call("ZADD", key, now, requestId)
+
+        redis.call("EXPIRE", key, math.ceil(windowMs / 1000))
+        
+        return {1, count + 1}
+      `,
+      1,
+      key,
+      now,
+      windowSeconds * 1000,
+      max,
+      requestId,
+    );
+
+    if (!allowed) {
       const ttl = await redisClient.ttl(key);
       res.set("Retry-After", String(ttl));
       return res.status(429).json({
@@ -26,12 +56,12 @@ const rateLimiting = ({
       });
     }
 
-    await redisClient.zadd(key, Date.now(), crypto.randomUUID());
-    await redisClient.expire(key, windowSeconds);
+    res.set({
+      "X-RateLimit-Limit": String(max),
+      "X-RateLimit-Remaining": String(max - count),
+    });
 
-    res.set("X-RateLimit-Limit", String(max));
-    res.set("X-RateLimit-Remaining", String(max - count));
-    return next();
+    next();
   });
 
 module.exports = rateLimiting;
