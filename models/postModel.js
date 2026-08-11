@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const cloudinary = require("../utils/cloudinary");
 
 const postSchema = new mongoose.Schema(
   {
@@ -73,7 +74,7 @@ postSchema.pre(/^find/, function () {
   });
 });
 
-// // Auto delete all the comments of the post before deleting the post
+// Auto delete all the comments of the post before deleting the post
 postSchema.pre("findOneAndDelete", async function () {
   const post = await this.model.findOne(this.getFilter());
 
@@ -81,6 +82,14 @@ postSchema.pre("findOneAndDelete", async function () {
     const Comment = require("./commentModel");
     await Comment.deleteMany({ post: post._id });
   }
+});
+
+postSchema.post("findOneAndDelete", async function (doc) {
+  if (!doc.images) return;
+
+  doc.images.map(async (image) => {
+    await cloudinary.uploader.destroy(image.publicId);
+  });
 });
 
 const Post = mongoose.model("Post", postSchema);
