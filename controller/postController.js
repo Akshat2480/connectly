@@ -27,23 +27,26 @@ const postController = {
     const filteredBody = filterObject(req.body, ["content"]);
     filteredBody.author = req.user.id;
 
+    const files = req.files || [];
+
     const post = await Post.create({
       ...filteredBody,
-      imageStatus: "processing",
-      expectedImageCount: req.files.length,
-      processedImageCount: 0,
+      imageStatus: files.length ? "processing" : "done",
+      expectedImageCount: files.length,
     });
 
-    const jobs = req.files.map((file, index) => ({
-      name: "resize-and-upload",
-      data: {
-        postId: post._id.toString(),
-        index,
-        buffer: file.buffer.toString("base64"),
-      },
-    }));
+    if (files.length) {
+      const jobs = req.files.map((file, index) => ({
+        name: "resize-and-upload",
+        data: {
+          postId: post._id.toString(),
+          index,
+          buffer: file.buffer.toString("base64"),
+        },
+      }));
 
-    await imageQueue.addBulk(jobs);
+      await imageQueue.addBulk(jobs);
+    }
 
     res.status(201).json({ post });
   }),
