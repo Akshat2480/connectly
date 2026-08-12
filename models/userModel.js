@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+    photoStatus: {
+      type: String,
+      enum: ["processing", "done", "failed"],
+    },
     password: {
       type: String,
       required: [true, "Please provide a password"],

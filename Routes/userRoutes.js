@@ -79,7 +79,6 @@ router.patch(
   "/me",
   authController.protect,
   userController.uploadUserPhoto,
-  userController.resizeUserPhoto,
   updateMeValidator,
   validate,
   userController.updateMe,

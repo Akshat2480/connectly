@@ -12,6 +12,7 @@ const AsyncCatch = require("../utils/AsyncCatch");
 const APIFeatures = require("../utils/apiFeatures");
 const logger = require("../utils/logger");
 const { invalidatePrefix } = require("../utils/cache");
+const { imageQueue } = require("../queues/imageQueue");
 
 const filterObject = (obj, allowedField) => {
   const newObj = {};
@@ -27,6 +28,8 @@ const userController = {
     next();
   },
 
+  uploadUserPhoto: upload.single("photo"),
+
   updateMe: asyncCatch(async (req, res, next) => {
     if (req.body.password || req.body.passwordConfirm) {
       return next(
@@ -38,39 +41,20 @@ const userController = {
     }
     const filterBody = filterObject(req.body, ["name"]);
 
-    let currentUser;
-    let uploadedImage;
-    if (req.file) {
-      currentUser = await User.findById(req.user.id).select("+photoPublicId");
-      uploadedImage = await uploadToCloudinary(
-        req.file.buffer,
-        "connectly/users",
-      );
-      filterBody.photo = uploadedImage.secure_url;
-      filterBody.photoPublicId = uploadedImage.public_id;
-    }
-
-    let updatedUser;
-    try {
-      updatedUser = await User.findByIdAndUpdate(req.user.id, filterBody, {
+    updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { ...filterBody, photoStatus: req.file ? "processing" : "done" },
+      {
         returnDocument: "after",
         runValidators: true,
-      });
-    } catch (err) {
-      if (uploadedImage?.public_id) {
-        await cloudinary.uploader.destroy(uploadedImage.public_id);
-        return next(new AppError("There was a problem updating the user"));
-      }
-    }
+      },
+    );
 
-    if (currentUser?.photoPublicId)
-      await cloudinary.uploader
-        .destroy(currentUser.photoPublicId)
-        .catch((err) =>
-          logger.warn("Failed to delete old profile image", {
-            message: err.message,
-          }),
-        );
+    if (req.file)
+      await imageQueue.add("resize-and-upload-user", {
+        userId: updatedUser._id.toString(),
+        buffer: req.file.buffer.toString("base64"),
+      });
 
     res.status(200).json({
       status: "success",
@@ -154,19 +138,6 @@ const userController = {
       `user:${req.params.id}`,
       `user:${req.user.id}`,
     ]);
-  }),
-
-  uploadUserPhoto: upload.single("photo"),
-
-  resizeUserPhoto: asyncCatch(async (req, res, next) => {
-    if (!req.file) return next();
-
-    req.file.butter = await sharp(req.file.buffer)
-      .resize(500, 500)
-      .toFormat("jpeg")
-      .jpeg({ quality: 90 })
-      .toBuffer();
-    next();
   }),
 
   getFeed: AsyncCatch(async (req, res, next) => {

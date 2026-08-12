@@ -1,18 +1,19 @@
 const dotenv = require("dotenv");
 dotenv.config();
-const connectDB = require("../config/db");
+
 const { Worker } = require("bullmq");
 const sharp = require("sharp");
 
-require("../models/userModel");
+const User = require("../models/userModel");
 const Post = require("../models/postModel");
 const { queueConnection } = require("../config/redisConnection");
+const cloudinary = require("../utils/cloudinary");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const logger = require("../utils/logger");
 
-connectDB();
+require("../config/db")();
 
-const resolveStatudIfCompleted = async (postId) => {
+const resolveStatusIfCompleted = async (postId) => {
   const post = await Post.findById(postId);
 
   const totalResolved = post.processedImageCount + post.failedImageCount;
@@ -27,27 +28,53 @@ const resolveStatudIfCompleted = async (postId) => {
 const worker = new Worker(
   "image-processing",
   async (job) => {
-    const { postId, index, buffer } = job.data;
+    if (job.name === "resize-and-upload-post") {
+      const { postId, index, buffer } = job.data;
 
-    const resized = await sharp(Buffer.from(buffer, "base64"))
-      .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
-      .toFormat("jpeg")
-      .jpeg({ quality: 85 })
-      .toBuffer();
+      const resized = await sharp(Buffer.from(buffer, "base64"))
+        .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
+        .toFormat("jpeg")
+        .jpeg({ quality: 85 })
+        .toBuffer();
 
-    const uploaded = await uploadToCloudinary(resized, "connectly/posts");
+      const uploaded = await uploadToCloudinary(resized, "connectly/posts");
 
-    const posts = await Post.findByIdAndUpdate(postId, {
-      $set: {
-        [`images.${index}`]: {
-          url: uploaded.secure_url,
-          publicId: uploaded.public_id,
+      await Post.findByIdAndUpdate(postId, {
+        $set: {
+          [`images.${index}`]: {
+            url: uploaded.secure_url,
+            publicId: uploaded.public_id,
+          },
         },
-      },
-      $inc: { processedImageCount: 1 },
-    });
+        $inc: { processedImageCount: 1 },
+      });
 
-    await resolveStatudIfCompleted(postId);
+      await resolveStatusIfCompleted(postId);
+    }
+
+    if (job.name === "resize-and-upload-user") {
+      const { userId, buffer } = job.data;
+
+      const resized = await sharp(Buffer.from(buffer, "base64"))
+        .resize(500, 500)
+        .toFormat("jpeg")
+        .jpeg({ quality: 90 })
+        .toBuffer();
+
+      const uploaded = await uploadToCloudinary(resized, "connectly/users");
+
+      const user = await User.findById(userId).select("+photoPublicId");
+
+      const updatedUser = await User.findByIdAndUpdate(userId, {
+        photoStatus: "done",
+        photo: uploaded.secure_url,
+        photoPublicId: uploaded.public_id,
+      });
+
+      if (user.photoPublicId) {
+        await cloudinary.uploader.destroy(user.photoPublicId);
+      }
+    }
   },
   { connection: queueConnection, concurrency: 5 },
 );
@@ -63,13 +90,25 @@ worker.on("completed", (job) => {
 worker.on("failed", async (job, err) => {
   logger.error(`Job ${job?.id} failed: ${err.message}`);
 
-  const maxAttempts = job?.opts?.attempts ?? 1;
-  if (!job?.data?.postId || job.attemptsMade < maxAttempts) return;
+  if (job.name === "resize-and-upload-post") {
+    const maxAttempts = job?.opts?.attempts ?? 1;
+    if (!job?.data?.postId || job.attemptsMade < maxAttempts) return;
 
-  await Post.findByIdAndUpdate(job.data.postId, {
-    $inc: { failedImageCount: 1 },
-  });
-  await resolveStatudIfCompleted(job.data.postId);
+    await Post.findByIdAndUpdate(job.data.postId, {
+      $inc: { failedImageCount: 1 },
+    });
+    await resolveStatusIfCompleted(job.data.postId);
+  }
+
+  if (job.name === "resize-and-upload-user") {
+    const maxAttempts = job?.opts?.attempts ?? 1;
+
+    if (!job?.data?.userId || job.attemptsMade < maxAttempts) return;
+
+    await User.findByIdAndUpdate(job.data.userId, {
+      photoStatus: "failed",
+    });
+  }
 });
 
 worker.on("error", (err) => {

@@ -42,7 +42,6 @@ const postSchema = new mongoose.Schema(
     imageStatus: {
       type: String,
       enum: ["processing", "done", "failed", "partial"],
-      default: "processing",
     },
     expectedImageCount: { type: Number, default: 0 },
     processedImageCount: { type: Number, default: 0 },

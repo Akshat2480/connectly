@@ -37,7 +37,7 @@ const postController = {
 
     if (files.length) {
       const jobs = req.files.map((file, index) => ({
-        name: "resize-and-upload",
+        name: "resize-and-upload-post",
         data: {
           postId: post._id.toString(),
           index,
