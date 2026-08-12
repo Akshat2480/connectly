@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
     photo: {
       type: String,
       default:
-        "https://res.cloudinary.com/mbeptgiz/image/upload/v1785220395/connectly/users/hpggdtxceavjkdnhk4xu.jpg",
+        "https://images.unsplash.com/vector-1784356508870-d8bf9d413673?q=80&w=2360&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     },
     photoPublicId: {
       type: String,

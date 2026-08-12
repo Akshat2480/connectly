@@ -5,7 +5,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
 dotenv.config({ path: "./.env" });
@@ -14,12 +13,14 @@ const User = require("../models/userModel");
 const Post = require("../models/postModel");
 const Comment = require("../models/commentModel");
 
+const cloudinary = require("../utils/cloudinary");
+
 const DB = process.env.DATABASE.replace(
   "<PASSWORD>",
   process.env.DATABASE_PASSWORD,
 );
 
-mongoose.connect(DB).then(() => console.log("DB connection successful"));
+require("../config/db")();
 
 // READ JSON FILES
 const users = JSON.parse(
@@ -51,7 +52,9 @@ const importData = async () => {
 const deleteData = async () => {
   try {
     await User.deleteMany();
+    await cloudinary.api.delete_resources_by_prefix("connectly/users/");
     await Post.deleteMany();
+    await cloudinary.api.delete_resources_by_prefix("connectly/posts/");
     await Comment.deleteMany();
     console.log("Data successfully deleted!");
   } catch (err) {
