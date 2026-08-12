@@ -1,4 +1,4 @@
-module.exports = (name, resetURL, resetToken ) => {
+module.exports = (name, resetURL) => {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -104,31 +104,6 @@ module.exports = (name, resetURL, resetToken ) => {
                       "
                     >
                       ${resetURL}
-                    </div>
-
-                    <!-- Development Token -->
-                    <h3 style="margin-top: 40px; color: #333;">
-                      Development Reset Token
-                    </h3>
-
-                    <p style="font-size: 14px; color: #666;">
-                      This token is included for development/testing only.
-                      Do not include this section in production emails.
-                    </p>
-
-                    <div
-                      style="
-                        background: #111827;
-                        color: #10b981;
-                        border-radius: 8px;
-                        padding: 16px;
-                        margin: 20px 0;
-                        font-family: Consolas, Monaco, monospace;
-                        font-size: 14px;
-                        word-break: break-all;
-                      "
-                    >
-                      ${resetToken}
                     </div>
 
                     <p

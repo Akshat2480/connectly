@@ -1,12 +1,11 @@
-const dotenv = require("dotenv");
-dotenv.config();
+require("dotenv").config();
 
 const { Worker } = require("bullmq");
-const sharp = require("sharp");
+const { queueConnection } = require("../config/redisConnection");
 
+const sharp = require("sharp");
 const User = require("../models/userModel");
 const Post = require("../models/postModel");
-const { queueConnection } = require("../config/redisConnection");
 const cloudinary = require("../utils/cloudinary");
 const uploadToCloudinary = require("../utils/uploadToCloudinary");
 const logger = require("../utils/logger");

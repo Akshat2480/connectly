@@ -1,16 +1,12 @@
 const jwt = require("jsonwebtoken");
-const { convert } = require("html-to-text");
 const crypto = require("crypto");
 const { promisify } = require("util");
 const User = require("../models/userModel");
 
 const AsyncCatch = require("../utils/AsyncCatch");
 const AppError = require("../utils/AppError");
-const welcomeTemplate = require("../utils/templates/welcomeTemplate");
-const resetPasswordTemplate = require("../utils/templates/resetPasswordTemplate");
-const logger = require("../utils/logger");
 const { invalidatePrefix } = require("../utils/cache");
-const { sendEmail } = require("../utils/email");
+const { emailQueue } = require("../queues/emailQueue");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -44,23 +40,12 @@ const authController = {
       passwordConfirm,
     });
 
-    // 2) Generate a JWT token and send it as cookie
+    // 2) Send email to the user
+    await emailQueue.add("send-welcome-email", { name: newUser.name });
+
+    // 3) Generate a JWT token and send it as cookie
     sendCookieWithToken(newUser, res, 201, "Sign up successful");
     res.status(201).json({ message: "Signed up successful" });
-
-    // 3) Send email to the user
-    const html = welcomeTemplate(newUser.name);
-    await sendEmail({
-      subject: "Welcome to Connectly!",
-      html,
-      text: convert(html),
-    }).catch((err) => {
-      logger.warn("Failed to send welcome email", {
-        userId: newUser._id,
-        email: newUser.email,
-        message: err.message,
-      });
-    });
 
     await invalidatePrefix("users");
   }),
@@ -158,25 +143,9 @@ const authController = {
     await user.save({ validateBeforeSave: false });
 
     // 4) send the reset url to user email
-    try {
-      const html = resetPasswordTemplate(user.name, resetUrl, resetToken);
-      await sendEmail({
-        subject: "Your password reset link (Valid for 10min)",
-        html,
-        text: convert(html),
-      });
-      await invalidatePrefix(["users", `user:${req.user.id}`]);
-    } catch (err) {
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save({ validateBeforeSave: false });
-      return next(
-        new AppError(
-          "There was an error sending email. Please try again later!",
-          500,
-        ),
-      );
-    }
+    await emailQueue.add("send-reset-email", { name: user.name, resetUrl });
+
+    await invalidatePrefix(["users", `user:${user.id}`]);
 
     // 5) Send response
     res.status(200).json({
@@ -213,7 +182,7 @@ const authController = {
     sendCookieWithToken(user, res);
     res.status(200).json({ message: "Logged in successful" });
 
-    await invalidatePrefix(["users", `user:${req.user.id}`]);
+    await invalidatePrefix(["users", `user:${user.id}`]);
   }),
 };
 
