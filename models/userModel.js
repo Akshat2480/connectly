@@ -118,8 +118,7 @@ userSchema.methods.createPasswordResetToken = function () {
   return resetToken;
 };
 
-const User = mongoose.model("User", userSchema);
-
+// Pre save middleware to delete all the posts and comments of the user being soft - deleted
 userSchema.pre("save", async function () {
   if (this.isModified("active") && !this.active) {
     const Post = require("./postModel");
@@ -137,4 +136,5 @@ userSchema.pre("save", async function () {
   }
 });
 
+const User = mongoose.model("User", userSchema);
 module.exports = User;
