@@ -1,5 +1,6 @@
 const dotenv = require("dotenv");
-const mongoose = require("mongoose");
+const http = require("http");
+const { Server } = require("socket.io");
 const logger = require("./utils/logger");
 
 dotenv.config({ path: "./.env", quiet: true });
@@ -7,7 +8,12 @@ dotenv.config({ path: "./.env", quiet: true });
 require("./models/userModel");
 require("./models/postModel");
 require("./models/commentModel");
+require("./models/conversationModel");
+require("./models/messageModel");
 const app = require("./app");
+
+const socketAuth = require("./socket/socketAuth");
+const registerChatSocket = require("./socket/chatSocket");
 
 process.on("uncaughtException", (err) => {
   logger.error("UNCAUGHT EXCEPTION - shutting down...", {
@@ -19,8 +25,18 @@ process.on("uncaughtException", (err) => {
 
 require("./config/db")();
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  },
+});
+io.use(socketAuth);
+registerChatSocket(io);
+
 const port = process.env.PORT;
-const server = app.listen(port, "0.0.0.0", () => {
+server.listen(port, "0.0.0.0", () => {
   logger.info(`The server is listening on port ${port}`);
 });
 
