@@ -13,6 +13,7 @@ const app = express();
 const postRouter = require("./Routes/postRoutes");
 const userRouter = require("./Routes/userRoutes");
 const commentRouter = require("./Routes/commentRoutes");
+const conversationRouter = require("./Routes/conversationRoutes");
 const globalErrorHandler = require("./controller/errorController");
 
 const logger = require("./utils/logger");
@@ -40,7 +41,7 @@ app.use(
 
 app.use(helmet());
 app.use(hpp());
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
 app.use(compression());
 
@@ -52,6 +53,7 @@ const swaggerDocument = YAML.load("./docs/openapi.yaml");
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
 app.use("/api/v1/comments", commentRouter);
+app.use("/api/v1/conversations", conversationRouter);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(globalErrorHandler);
