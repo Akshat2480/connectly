@@ -7,8 +7,6 @@ const ONLINE_PREFIX = "online:";
 
 module.exports = (io) => {
   io.on("connection", async (socket) => {
-    const Conversation = require("../models/conversationModel");
-
     const userId = socket.user.id;
     logger.debug(`Socket connected: ${userId}`);
 
