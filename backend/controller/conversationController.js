@@ -9,8 +9,13 @@ const conversationController = {
       participants: req.user.id,
     })
       .sort("-updatedAt")
-      .populate({ path: "lastMessage", select: "textg" });
-    res.status(200).json({ status: "success", data: { conversations } });
+      .populate({ path: "lastMessage", select: "text" });
+    res
+      .status(200)
+      .json({
+        status: "success",
+        data: { results: conversations.length, conversations },
+      });
   }),
 
   getOrCreateConversation: AsyncCatch(async (req, res, next) => {
@@ -42,7 +47,10 @@ const conversationController = {
     const messages = await Message.find({ conversation: conversationId })
       .sort("-createdAt")
       .limit(50);
-    res.status(200).json({ status: "success", data: { messages } });
+    res.status(200).json({
+      status: "success",
+      data: { results: messages.length, messages },
+    });
   }),
 };
 

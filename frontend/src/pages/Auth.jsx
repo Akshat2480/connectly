@@ -118,7 +118,11 @@ function Auth({ onAuthSuccess }) {
             disabled={loading}
             className="w-full rounded-lg bg-teal-800 text-white text-sm font-medium py-2.5 hover:bg-teal-900 transition-colors disabled:opacity-50"
           >
-            {loading ? "Please wait…" : mode === "login" ? "Log in" : "Register"}
+            {loading
+              ? "Please wait…"
+              : mode === "login"
+                ? "Log in"
+                : "Register"}
           </button>
         </form>
 

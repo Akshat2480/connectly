@@ -71,8 +71,8 @@ router.post(
 router.get(
   "/me",
   authController.protect,
-  userController.getMe,
   cacheMiddleware((req) => `user:${req.user.id}`),
+  userController.getMe,
   userController.getUser,
 );
 router.patch(
