@@ -24,8 +24,6 @@ export default function Auth() {
     setError("");
     setLoading(true);
 
-    console.log(form);
-
     try {
       if (mode === "register") await register(form);
       else await login({ email: form.email, password: form.password });

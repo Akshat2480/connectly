@@ -14,10 +14,29 @@ function App() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    api.get("/conversations").then((res) => {
-      setConversations(res.data.data.conversations);
-    });
-  }, []);
+    const fetechConversations = async () => {
+      const res = await api.get("/conversations");
+      const conversations = res.data.data.conversations;
+
+      const conversationsWithUnread = await Promise.all(
+        conversations.map(async (convo) => {
+          const res = await api.get(`/conversations/${convo._id}/messages`);
+
+          const unreadMessages = res.data.data.messages.filter(
+            (m) => !m.readBy.includes(me._id),
+          );
+
+          return {
+            ...convo,
+            unreadMessages: unreadMessages.length,
+          };
+        }),
+      );
+      setConversations(conversationsWithUnread);
+    };
+
+    fetechConversations();
+  }, [me]);
 
   useEffect(() => {
     if (!socket) return;
@@ -42,7 +61,11 @@ function App() {
       setConversations((prev) =>
         prev.map((convo) =>
           convo._id === msg.conversation
-            ? { ...convo, lastMessage: msg }
+            ? {
+                ...convo,
+                lastMessage: msg,
+                unreadMessages: convo.unreadMessages + 1,
+              }
             : convo,
         ),
       );
@@ -64,11 +87,7 @@ function App() {
   };
 
   const openConversation = async (convo) => {
-    if (activeConvo) {
-      socket.emit("conversation:leave", activeConvo._id);
-    }
     setActiveConvo(convo);
-    socket.emit("conversation:join", convo._id);
 
     const res = await api.get(`/conversations/${convo._id}/messages`);
     setMessages(res.data.data.results ? res.data.data.messages.reverse() : []);
@@ -120,6 +139,7 @@ function App() {
           {conversations.map((c) => {
             const other = otherParticipant(c);
             const active = activeConvo?._id === c._id;
+
             return (
               <button
                 key={c._id}
@@ -142,6 +162,11 @@ function App() {
                   <div className="text-xs text-stone-500 truncate">
                     {c.lastMessage?.text || "No messages yet"}
                   </div>
+                  {c.unreadMessages > 0 && (
+                    <div className="mt-1 inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium text-teal-800">
+                      {c.unreadMessages} unread
+                    </div>
+                  )}
                 </div>
               </button>
             );
