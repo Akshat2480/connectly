@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useRef, useContext } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import { api, API_URL } from "../lib/api";
 import { io } from "socket.io-client";
 
@@ -8,8 +8,7 @@ export function AuthProvider({ children }) {
   const [me, setMe] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
-
-  const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     api
@@ -25,9 +24,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!isAuthed) return;
     const s = io(API_URL, { withCredentials: true });
-    socketRef.current = s;
 
-    return () => s.disconnect();
+    s.on("connect", () => {
+      setSocket(s);
+    });
+
+    return () => {
+      s.off("connect");
+      s.disconnect();
+      setSocket(null);
+    };
   }, [isAuthed]);
 
   const login = async (credential) => {
@@ -46,15 +52,15 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await api.post("/users/logout");
-    socketRef.current?.disconnect();
-    socketRef.current = null;
+    socket.disconnect();
+    setSocket(null);
     setMe(null);
     setIsAuthed(false);
   };
 
   return (
     <AuthContext.Provider
-      value={{ me, isAuthed, authChecked, socketRef, register, login, logout }}
+      value={{ me, isAuthed, authChecked, socket, register, login, logout }}
     >
       {children}
     </AuthContext.Provider>

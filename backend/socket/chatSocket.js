@@ -13,6 +13,13 @@ module.exports = (io) => {
     await redisClient.sadd(`${ONLINE_PREFIX}${userId}`, socket.id);
     socket.broadcast.emit("user:online", { userId });
 
+    const conversations = await Conversation.find({
+      participants: userId,
+    }).select("_id");
+    conversations.forEach((convo) => {
+      socket.join(`conversation:${convo._id}`);
+    });
+
     socket.on("conversation:join", async (conversationId) => {
       const convo = await Conversation.findOne({
         _id: conversationId,
@@ -44,7 +51,7 @@ module.exports = (io) => {
         await Conversation.findByIdAndUpdate(conversationId, {
           lastMessage: message._id,
         });
-        
+
         const populated = await message.populate({
           path: "sender",
           select: "name photo",

@@ -3,7 +3,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
 function App() {
-  const { me, socketRef } = useAuth();
+  const { me, socket } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [activeConvo, setActiveConvo] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -20,8 +20,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!socketRef.current) return;
-    const socket = socketRef.current;
+    if (!socket) return;
 
     socket.on("typing:start", ({ userId }) => {
       setTypingUsers((prev) => new Set(prev).add(userId));
@@ -54,10 +53,10 @@ function App() {
       socket.off("typing:stop");
       socket.off("message:new");
     };
-  }, [socketRef, activeConvo]);
+  }, [socket, activeConvo]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behaviour: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const otherParticipant = (convo) => {
@@ -65,10 +64,12 @@ function App() {
   };
 
   const openConversation = async (convo) => {
-    if (activeConvo)
-      socketRef.current.emit("conversation:leave", activeConvo._id);
+    if (activeConvo) {
+      socket.emit("conversation:leave", activeConvo._id);
+    }
     setActiveConvo(convo);
-    socketRef.current.emit("conversation:join", convo._id);
+    socket.emit("conversation:join", convo._id);
+
     const res = await api.get(`/conversations/${convo._id}/messages`);
     setMessages(res.data.data.results ? res.data.data.messages.reverse() : []);
   };
@@ -76,10 +77,10 @@ function App() {
   const handleTyping = (e) => {
     setText(e.target.value);
 
-    socketRef.current.emit("typing:start", { conversationId: activeConvo._id });
+    socket.emit("typing:start", { conversationId: activeConvo._id });
     clearTimeout(typingTimeout.current);
     typingTimeout.current = setTimeout(() => {
-      socketRef.current.emit("typing:stop", {
+      socket.emit("typing:stop", {
         conversationId: activeConvo._id,
       });
     }, 1000);
@@ -89,7 +90,7 @@ function App() {
     e.preventDefault();
     if (!text.trim() || !activeConvo) return;
 
-    socketRef.current.emit(
+    socket.emit(
       "message:send",
       {
         conversationId: activeConvo._id,
@@ -101,7 +102,7 @@ function App() {
     );
 
     setText("");
-    socketRef.emit("typing:stop", { conversationId: activeConvo._id });
+    socket.emit("typing:stop", { conversationId: activeConvo._id });
   };
 
   return (
