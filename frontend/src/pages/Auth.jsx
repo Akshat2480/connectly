@@ -1,14 +1,10 @@
 import { useState } from "react";
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
-const api = axios.create({
-  baseURL: `${API_URL}/api/v1`,
-  withCredentials: true,
-});
-
-function Auth({ onAuthSuccess }) {
+export default function Auth() {
+  const { login, register } = useAuth();
+  const navigate = useNavigate();
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({
     name: "",
@@ -19,25 +15,23 @@ function Auth({ onAuthSuccess }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    console.log(form);
+
     try {
-      if (mode === "register") {
-        await api.post("/users/register", form);
-      } else {
-        await api.post("/users/login", {
-          email: form.email,
-          password: form.password,
-        });
-      }
-      onAuthSuccess();
+      if (mode === "register") await register(form);
+      else await login({ email: form.email, password: form.password });
+      navigate("/feed");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      setError(err.response?.data?.message || "Something went wrong...");
     } finally {
       setLoading(false);
     }
@@ -56,7 +50,7 @@ function Auth({ onAuthSuccess }) {
           <p className="text-sm text-stone-500 mt-1">
             {mode === "login"
               ? "Log in to keep chatting"
-              : "Join Connectly to start chatting"}
+              : "Join Connectly to get started"}
           </p>
         </div>
 
@@ -71,10 +65,9 @@ function Auth({ onAuthSuccess }) {
               value={form.name}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
+              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
             />
           )}
-
           <input
             name="email"
             type="email"
@@ -82,9 +75,8 @@ function Auth({ onAuthSuccess }) {
             value={form.email}
             onChange={handleChange}
             required
-            className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
+            className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
           />
-
           <input
             name="password"
             type="password"
@@ -92,9 +84,8 @@ function Auth({ onAuthSuccess }) {
             value={form.password}
             onChange={handleChange}
             required
-            className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
+            className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
           />
-
           {mode === "register" && (
             <input
               name="passwordConfirm"
@@ -103,7 +94,7 @@ function Auth({ onAuthSuccess }) {
               value={form.passwordConfirm}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
+              className="w-full rounded-lg border border-stone-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
             />
           )}
 
@@ -139,5 +130,3 @@ function Auth({ onAuthSuccess }) {
     </div>
   );
 }
-
-export default Auth;
