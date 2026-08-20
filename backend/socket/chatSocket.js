@@ -44,6 +44,7 @@ module.exports = (io) => {
         await Conversation.findByIdAndUpdate(conversationId, {
           lastMessage: message._id,
         });
+        
         const populated = await message.populate({
           path: "sender",
           select: "name photo",

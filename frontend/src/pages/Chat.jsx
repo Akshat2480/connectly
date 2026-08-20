@@ -19,6 +19,7 @@ function App() {
 
   const socketRef = useRef(null);
   const typingTimeout = useRef(null);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const s = io(API_URL, { withCredentials: true });
@@ -51,7 +52,31 @@ function App() {
         return next;
       });
     });
-  }, [socketRef]);
+
+    socketRef.current.on("message:new", (msg) => {
+      setMessages((prev) =>
+        msg.conversation === activeConvo?._id ? [...prev, msg] : prev,
+      );
+
+      setConversations((prev) =>
+        prev.map((convo) =>
+          convo._id === msg.conversation
+            ? { ...convo, lastMessage: msg }
+            : convo,
+        ),
+      );
+    });
+
+    return () => {
+      socketRef.current.off("typing:start");
+      socketRef.current.off("typing:stop");
+      socketRef.current.off("message:new");
+    };
+  }, [socketRef, activeConvo]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behaviour: "smooth" });
+  }, [messages]);
 
   const otherParticipant = (convo) => {
     return convo.participants.find((p) => p._id != me._id);
@@ -78,7 +103,29 @@ function App() {
     }, 1000);
   };
 
-  const sendMessage = () => {};
+  const handleLogout = async () => {
+    await api.post("/users/logout");
+    socketRef.current?.disconnect();
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!text.trim() || !activeConvo) return;
+
+    socketRef.current.emit(
+      "message:send",
+      {
+        conversationId: activeConvo._id,
+        text,
+      },
+      (ack) => {
+        if (ack.error) console.error(ack.error);
+      },
+    );
+
+    setText("");
+    socketRef.emit("typing:stop", { conversationId: activeConvo._id });
+  };
 
   return (
     <div className="h-screen flex bg-stone-50">
@@ -88,7 +135,10 @@ function App() {
         <div className="flex items-center justify-between px-4 py-4 border-b border-stone-100">
           <h1 className="text-lg font-semibold text-stone-900">Chats</h1>
 
-          <button className="text-xs text-stone-400 hover:text-stone-700 transition-colors">
+          <button
+            onClick={handleLogout}
+            className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
+          >
             Log out
           </button>
         </div>
@@ -166,6 +216,7 @@ function App() {
                     >
                       {message.text}
                     </div>
+                    <div ref={messagesEndRef}></div>
                   </div>
                 );
               })}
