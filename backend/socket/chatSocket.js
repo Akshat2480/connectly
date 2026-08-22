@@ -65,13 +65,20 @@ module.exports = (io) => {
       }
     });
 
-    socket.on("message:read", async ({ conversationId, messageId }) => {
+    socket.on("message:read", async ({ messageId }) => {
       await Message.findByIdAndUpdate(messageId, {
         $addToSet: { readBy: userId },
       });
+    });
+
+    socket.on("conversation:MarkRead", async ({ conversationId }) => {
+      await Message.updateMany(
+        { conversation: conversationId, readBy: { $ne: userId } },
+        { $addToSet: { readBy: userId } },
+      );
       socket
         .to(`conversation:${conversationId}`)
-        .emit("message:read", { messageId, userId });
+        .emit("conversation:read", { conversationId, userId });
     });
 
     socket.on("typing:start", ({ conversationId }) => {

@@ -58,16 +58,17 @@ function App() {
         msg.conversation === activeConvo?._id ? [...prev, msg] : prev,
       );
 
+      if (msg.conversation === activeConvo?.id) {
+        socket.emit("message:read", { messageId: msg._id });
+        return;
+      }
+
       setConversations((prev) =>
-        prev.map((convo) =>
+        prev.map((convo) => {
           convo._id === msg.conversation
-            ? {
-                ...convo,
-                lastMessage: msg,
-                unreadMessages: convo.unreadMessages + 1,
-              }
-            : convo,
-        ),
+            ? { ...convo, unreadMessages: convo.unreadMessages + 1 }
+            : convo;
+        }),
       );
     });
 
@@ -90,7 +91,14 @@ function App() {
     setActiveConvo(convo);
 
     const res = await api.get(`/conversations/${convo._id}/messages`);
-    setMessages(res.data.data.results ? res.data.data.messages.reverse() : []);
+    const fetchedMessages = res.data.data.messages.reverse();
+    setMessages(fetchedMessages);
+
+    socket.emit("conversation:MarkRead", { conversationId: convo._id });
+
+    setConversations((prev) =>
+      prev.map((c) => (c._id === convo._id ? { ...c, unreadMessages: 0 } : c)),
+    );
   };
 
   const handleTyping = (e) => {
