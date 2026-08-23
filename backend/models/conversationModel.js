@@ -13,9 +13,10 @@ const conversationSchema = new mongoose.Schema(
 conversationSchema.index({ participants: 1 });
 
 conversationSchema.pre(/^find/, function () {
-  this.populate({ path: "participants", select: "name photo" }).populate(
-    this.lastMessage,
-  );
+  this.populate({ path: "participants", select: "name photo" }).populate({
+    path: "lastMessage",
+    select: "text",
+  });
 });
 
 module.exports = mongoose.model("Conversation", conversationSchema);

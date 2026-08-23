@@ -58,17 +58,22 @@ function App() {
         msg.conversation === activeConvo?._id ? [...prev, msg] : prev,
       );
 
-      if (msg.conversation === activeConvo?.id) {
+      if (msg.conversation === activeConvo?._id) {
         socket.emit("message:read", { messageId: msg._id });
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === msg.conversation ? { ...c, lastMessage: msg } : c,
+          ),
+        );
         return;
       }
 
       setConversations((prev) =>
-        prev.map((convo) => {
+        prev.map((convo) =>
           convo._id === msg.conversation
             ? { ...convo, unreadMessages: convo.unreadMessages + 1 }
-            : convo;
-        }),
+            : convo,
+        ),
       );
     });
 

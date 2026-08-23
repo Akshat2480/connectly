@@ -7,15 +7,11 @@ const conversationController = {
   getMyConversations: AsyncCatch(async (req, res) => {
     const conversations = await Conversation.find({
       participants: req.user.id,
-    })
-      .sort("-updatedAt")
-      .populate({ path: "lastMessage", select: "text" });
-    res
-      .status(200)
-      .json({
-        status: "success",
-        data: { results: conversations.length, conversations },
-      });
+    }).sort("-updatedAt");
+    res.status(200).json({
+      status: "success",
+      data: { results: conversations.length, conversations },
+    });
   }),
 
   getOrCreateConversation: AsyncCatch(async (req, res, next) => {
