@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
+const formatTime = (date) =>
+  new Date(date).toLocaleDateString([], { hour: "2-digit", minute: "2-digit" });
+
 function App() {
   const { me, socket } = useAuth();
   const [conversations, setConversations] = useState([]);
@@ -71,7 +74,11 @@ function App() {
       setConversations((prev) =>
         prev.map((convo) =>
           convo._id === msg.conversation
-            ? { ...convo, unreadMessages: convo.unreadMessages + 1 }
+            ? {
+                ...convo,
+                lastMessage: msg,
+                unreadMessages: convo.unreadMessages + 1,
+              }
             : convo,
         ),
       );
@@ -216,7 +223,16 @@ function App() {
                           : "bg-white border border-stone-200 text-stone-900 rounded-bl-md"
                       }`}
                     >
-                      {m.text}
+                      <div>{m.text}</div>
+                      <div
+                        className={`flex items-center gap-1 mt-1 ${mine ? "justify-end" : "justify-start"}`}
+                      >
+                        <span
+                          className={` text-[10px] ${mine ? "text-teal-100/80" : "text-stone-400"}`}
+                        >
+                          {formatTime(m.createdAt)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
