@@ -1,7 +1,8 @@
+const { redisClient } = require("../config/redisConnection");
 const Conversation = require("../models/conversationModel");
 const Message = require("../models/messageModel");
-const { redisClient } = require("../config/redisConnection");
 const logger = require("../utils/logger");
+const socketCatch = require("../utils/socketCatch");
 
 const ONLINE_PREFIX = "online:";
 
@@ -20,66 +21,81 @@ module.exports = (io) => {
       socket.join(`conversation:${convo._id}`);
     });
 
-    socket.on("conversation:join", async (conversationId) => {
-      const convo = await Conversation.findOne({
-        _id: conversationId,
-        participants: userId,
-      });
-      if (!convo) return socket.emit("error", "Not a participant");
-      socket.join(`conversation:${conversationId}`);
-    });
+    socket.on(
+      "conversation:join",
+      socketCatch(async (conversationId) => {
+        const convo = await Conversation.findOne({
+          _id: conversationId,
+          participants: userId,
+        });
+        if (!convo) return socket.emit("error", "Not a participant");
+        socket.join(`conversation:${conversationId}`);
+      }),
+    );
 
     socket.on("conversation:leave", (conversationId) => {
       socket.leave(`conversation:${conversationId}`);
     });
 
-    socket.on("message:send", async ({ conversationId, text }, ack) => {
-      try {
-        const convo = await Conversation.findOne({
-          _id: conversationId,
-          participants: userId,
+    socket.on(
+      "message:send",
+      socketCatch(async ({ conversationId, text }, ack) => {
+        try {
+          const convo = await Conversation.findOne({
+            _id: conversationId,
+            participants: userId,
+          });
+          if (!convo) return ack?.({ error: "Not a participant" });
+
+          const message = await Message.create({
+            conversation: conversationId,
+            sender: userId,
+            text,
+            readBy: [userId],
+          });
+
+          await Conversation.findByIdAndUpdate(conversationId, {
+            lastMessage: message._id,
+          });
+
+          const populated = await message.populate({
+            path: "sender",
+            select: "name photo",
+          });
+
+          io.to(`conversation:${conversationId}`).emit(
+            "message:new",
+            populated,
+          );
+          ack?.({ status: "success", data: populated });
+        } catch (err) {
+          logger.error("message:send failed", { message: err.message });
+          ack?.({ error: "Failed to send message" });
+        }
+      }),
+    );
+
+    socket.on(
+      "message:read",
+      socketCatch(async ({ messageId }) => {
+        await Message.findByIdAndUpdate(messageId, {
+          $addToSet: { readBy: userId },
         });
-        if (!convo) return ack?.({ error: "Not a participant" });
+      }),
+    );
 
-        const message = await Message.create({
-          conversation: conversationId,
-          sender: userId,
-          text,
-          readBy: [userId],
-        });
-
-        await Conversation.findByIdAndUpdate(conversationId, {
-          lastMessage: message._id,
-        });
-
-        const populated = await message.populate({
-          path: "sender",
-          select: "name photo",
-        });
-
-        io.to(`conversation:${conversationId}`).emit("message:new", populated);
-        ack?.({ status: "success", data: populated });
-      } catch (err) {
-        logger.error("message:send failed", { message: err.message });
-        ack?.({ error: "Failed to send message" });
-      }
-    });
-
-    socket.on("message:read", async ({ messageId }) => {
-      await Message.findByIdAndUpdate(messageId, {
-        $addToSet: { readBy: userId },
-      });
-    });
-
-    socket.on("conversation:MarkRead", async ({ conversationId }) => {
-      await Message.updateMany(
-        { conversation: conversationId, readBy: { $ne: userId } },
-        { $addToSet: { readBy: userId } },
-      );
-      socket
-        .to(`conversation:${conversationId}`)
-        .emit("conversation:read", { conversationId, userId });
-    });
+    socket.on(
+      "conversation:MarkRead",
+      socketCatch(async ({ conversationId }) => {
+        await Message.updateMany(
+          { conversation: conversationId, readBy: { $ne: userId } },
+          { $addToSet: { readBy: userId } },
+        );
+        socket
+          .to(`conversation:${conversationId}`)
+          .emit("conversation:read", { conversationId, userId });
+      }),
+    );
 
     socket.on("typing:start", ({ conversationId }) => {
       socket
@@ -93,11 +109,14 @@ module.exports = (io) => {
         .emit("typing:stop", { userId });
     });
 
-    socket.on("disconnect", async () => {
-      await redisClient.srem(`${ONLINE_PREFIX}${userId}`, socket.id);
-      const remaining = await redisClient.scard(`${ONLINE_PREFIX}${userId}`);
-      if (remaining === 0) socket.broadcast.emit("user:offline", { userId });
-      logger.debug(`Socket:disconnected: ${userId}`);
-    });
+    socket.on(
+      "disconnect",
+      socketCatch(async () => {
+        await redisClient.srem(`${ONLINE_PREFIX}${userId}`, socket.id);
+        const remaining = await redisClient.scard(`${ONLINE_PREFIX}${userId}`);
+        if (remaining === 0) socket.broadcast.emit("user:offline", { userId });
+        logger.debug(`Socket:disconnected: ${userId}`);
+      }),
+    );
   });
 };
