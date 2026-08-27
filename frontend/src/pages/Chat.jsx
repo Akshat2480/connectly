@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import ConversationSkeleton from "../components/conversationSkeleton";
+import { MessagesSkeleton } from "../components/messageSkeleton";
 
 const formatTime = (date) =>
   new Date(date).toLocaleDateString([], { hour: "2-digit", minute: "2-digit" });
@@ -8,8 +10,10 @@ const formatTime = (date) =>
 function App() {
   const { me, socket } = useAuth();
   const [conversations, setConversations] = useState([]);
+  const [conversationLoading, setConversationLoading] = useState(true);
   const [activeConvo, setActiveConvo] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [text, setText] = useState("");
   const [typingUsers, setTypingUsers] = useState(new Set());
 
@@ -18,24 +22,28 @@ function App() {
 
   useEffect(() => {
     const fetechConversations = async () => {
-      const res = await api.get("/conversations");
-      const conversations = res.data.data.conversations;
+      try {
+        const res = await api.get("/conversations");
+        const conversations = res.data.data.conversations;
 
-      const conversationsWithUnread = await Promise.all(
-        conversations.map(async (convo) => {
-          const res = await api.get(`/conversations/${convo._id}/messages`);
+        const conversationsWithUnread = await Promise.all(
+          conversations.map(async (convo) => {
+            const res = await api.get(`/conversations/${convo._id}/messages`);
 
-          const unreadMessages = res.data.data.messages.filter(
-            (m) => !m.readBy.includes(me._id),
-          );
+            const unreadMessages = res.data.data.messages.filter(
+              (m) => !m.readBy.includes(me._id),
+            );
 
-          return {
-            ...convo,
-            unreadMessages: unreadMessages.length,
-          };
-        }),
-      );
-      setConversations(conversationsWithUnread);
+            return {
+              ...convo,
+              unreadMessages: unreadMessages.length,
+            };
+          }),
+        );
+        setConversations(conversationsWithUnread);
+      } finally {
+        setConversationLoading(false);
+      }
     };
 
     fetechConversations();
@@ -101,16 +109,23 @@ function App() {
 
   const openConversation = async (convo) => {
     setActiveConvo(convo);
+    setMessagesLoading(true);
 
-    const res = await api.get(`/conversations/${convo._id}/messages`);
-    const fetchedMessages = res.data.data.messages.reverse();
-    setMessages(fetchedMessages);
+    try {
+      const res = await api.get(`/conversations/${convo._id}/messages`);
+      const fetchedMessages = res.data.data.messages.reverse();
+      setMessages(fetchedMessages);
 
-    socket.emit("conversation:MarkRead", { conversationId: convo._id });
+      socket.emit("conversation:MarkRead", { conversationId: convo._id });
 
-    setConversations((prev) =>
-      prev.map((c) => (c._id === convo._id ? { ...c, unreadMessages: 0 } : c)),
-    );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c._id === convo._id ? { ...c, unreadMessages: 0 } : c,
+        ),
+      );
+    } finally {
+      setMessagesLoading(false);
+    }
   };
 
   const handleTyping = (e) => {
@@ -151,46 +166,51 @@ function App() {
           <h1 className="text-lg font-semibold text-stone-900">Chats</h1>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {conversations.length === 0 && (
+          {conversationLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <ConversationSkeleton key={i} />
+            ))
+          ) : conversations.length === 0 ? (
             <p className="text-sm text-stone-400 px-4 py-6 text-center">
-              No conversations yet
+              No Conversations Yet
             </p>
-          )}
-          {conversations.map((c) => {
-            const other = otherParticipant(c);
-            const active = activeConvo?._id === c._id;
+          ) : (
+            conversations.map((c) => {
+              const other = otherParticipant(c);
+              const active = activeConvo?._id === c._id;
 
-            return (
-              <button
-                key={c._id}
-                onClick={() => openConversation(c)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2 ${
-                  active
-                    ? "bg-teal-50 border-teal-700"
-                    : "border-transparent hover:bg-stone-50"
-                }`}
-              >
-                <img
-                  src={other?.photo}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-stone-900 truncate">
-                    {other?.name}
-                  </div>
-                  <div className="text-xs text-stone-500 truncate">
-                    {c.lastMessage?.text || "No messages yet"}
-                  </div>
-                  {c.unreadMessages > 0 && (
-                    <div className="mt-1 inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium text-teal-800">
-                      {c.unreadMessages} unread
+              return (
+                <button
+                  key={c._id}
+                  onClick={() => openConversation(c)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-2 ${
+                    active
+                      ? "bg-teal-50 border-teal-700"
+                      : "border-transparent hover:bg-stone-50"
+                  }`}
+                >
+                  <img
+                    src={other?.photo}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-stone-900 truncate">
+                      {other?.name}
                     </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+                    <div className="text-xs text-stone-500 truncate">
+                      {c.lastMessage?.text || "No messages yet"}
+                    </div>
+                    {c.unreadMessages > 0 && (
+                      <div className="mt-1 inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium text-teal-800">
+                        {c.unreadMessages} unread
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })
+          )}
         </div>
       </aside>
 
@@ -209,34 +229,38 @@ function App() {
             </header>
 
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-2">
-              {messages.map((m) => {
-                const mine = m.sender._id === me?._id;
-                return (
-                  <div
-                    key={m._id}
-                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
-                  >
+              {messagesLoading ? (
+                <MessagesSkeleton />
+              ) : (
+                messages.map((m) => {
+                  const mine = m.sender._id === me?._id;
+                  return (
                     <div
-                      className={`max-w-[70%] px-4 py-2 text-sm leading-relaxed rounded-2xl ${
-                        mine
-                          ? "bg-teal-800 text-white rounded-br-md"
-                          : "bg-white border border-stone-200 text-stone-900 rounded-bl-md"
-                      }`}
+                      key={m._id}
+                      className={`flex ${mine ? "justify-end" : "justify-start"}`}
                     >
-                      <div>{m.text}</div>
                       <div
-                        className={`flex items-center gap-1 mt-1 ${mine ? "justify-end" : "justify-start"}`}
+                        className={`max-w-[70%] px-4 py-2 text-sm leading-relaxed rounded-2xl ${
+                          mine
+                            ? "bg-teal-800 text-white rounded-br-md"
+                            : "bg-white border border-stone-200 text-stone-900 rounded-bl-md"
+                        }`}
                       >
-                        <span
-                          className={` text-[10px] ${mine ? "text-teal-100/80" : "text-stone-400"}`}
+                        <div>{m.text}</div>
+                        <div
+                          className={`flex items-center gap-1 mt-1 ${mine ? "justify-end" : "justify-start"}`}
                         >
-                          {formatTime(m.createdAt)}
-                        </span>
+                          <span
+                            className={` text-[10px] ${mine ? "text-teal-100/80" : "text-stone-400"}`}
+                          >
+                            {formatTime(m.createdAt)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
               <div ref={messagesEndRef} />
             </div>
 
