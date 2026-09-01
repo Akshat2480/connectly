@@ -77,23 +77,28 @@ module.exports = (io) => {
 
     socket.on(
       "message:read",
-      socketCatch(async ({ messageId }) => {
+      socketCatch(async ({ messageId, conversationId }) => {
         await Message.findByIdAndUpdate(messageId, {
           $addToSet: { readBy: userId },
+        });
+        io.to(`conversation:${conversationId}`).emit("message:markedRead", {
+          messageId,
+          userId,
         });
       }),
     );
 
     socket.on(
-      "conversation:MarkRead",
+      "conversation:read",
       socketCatch(async ({ conversationId }) => {
         await Message.updateMany(
           { conversation: conversationId, readBy: { $ne: userId } },
           { $addToSet: { readBy: userId } },
         );
-        socket
-          .to(`conversation:${conversationId}`)
-          .emit("conversation:read", { conversationId, userId });
+        io.to(`conversation:${conversationId}`).emit(
+          "conversation:markedRead",
+          { conversationId, userId },
+        );
       }),
     );
 

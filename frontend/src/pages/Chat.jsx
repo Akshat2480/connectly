@@ -3,9 +3,10 @@ import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import ConversationSkeleton from "../components/conversationSkeleton";
 import { MessagesSkeleton } from "../components/messageSkeleton";
+import { FaCheck, FaCheckDouble } from "react-icons/fa";
 
 const formatTime = (date) =>
-  new Date(date).toLocaleDateString([], { hour: "2-digit", minute: "2-digit" });
+  new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 function App() {
   const { me, socket } = useAuth();
@@ -70,7 +71,12 @@ function App() {
       );
 
       if (msg.conversation === activeConvo?._id) {
-        socket.emit("message:read", { messageId: msg._id });
+        if (msg.sender._id !== me._id) {
+          socket.emit("message:read", {
+            messageId: msg._id,
+            conversationId: msg.conversation,
+          });
+        }
         setConversations((prev) =>
           prev.map((c) =>
             c._id === msg.conversation ? { ...c, lastMessage: msg } : c,
@@ -92,12 +98,36 @@ function App() {
       );
     });
 
+    socket.on("conversation:markedRead", ({ conversationId, userId }) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.conversation === conversationId
+            ? { ...msg, readBy: [...msg.readBy, userId] }
+            : msg,
+        ),
+      );
+    });
+
+    socket.on("message:markedRead", ({ messageId, userId }) => {
+      console.log(messageId, userId);
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? { ...msg, readBy: [...msg.readBy, userId] }
+            : msg,
+        ),
+      );
+    });
+
     return () => {
       socket.off("typing:start");
       socket.off("typing:stop");
       socket.off("message:new");
+      socket.off("conversation:markedRead");
+      socket.off("message:markedRead");
     };
-  }, [socket, activeConvo]);
+  }, [socket, activeConvo, me, conversations]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -116,7 +146,7 @@ function App() {
       const fetchedMessages = res.data.data.messages.reverse();
       setMessages(fetchedMessages);
 
-      socket.emit("conversation:MarkRead", { conversationId: convo._id });
+      socket.emit("conversation:read", { conversationId: convo._id });
 
       setConversations((prev) =>
         prev.map((c) =>
@@ -255,6 +285,16 @@ function App() {
                           >
                             {formatTime(m.createdAt)}
                           </span>
+                          {mine && (
+                            <span>
+                              {m.readBy.length <
+                              activeConvo.participants.length ? (
+                                <FaCheck size="10px" />
+                              ) : (
+                                <FaCheckDouble size="10px" className="text-teal-500"/>
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
